@@ -1,0 +1,22 @@
+{
+  "name": "insight-hunter",
+  "version": "1.0.0",
+  "description": "Single-file meditation & mind-body practice tracker \u2014 timers with atomic steps, plans, streaks. Offline-first PWA.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adervec/InsightMaster.git"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "node tools/build.mjs && node test/check.mjs",
+    "test": "node tools/build.mjs && node test/check.mjs && playwright test",
+    "icons": "node tools/make-icons.mjs",
+    "serve": "node tools/serve.mjs",
+    "launch": "node tools/serve.mjs --open"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "_readme": "The starter module that ships with InsightHunter: one practice, plainly described. This file is the whole content contract — swap it, or drop a content-pack.js beside the built app, to load a library of your own. See README 'Content'.",
+
+  "icons": {
+    "meditation": "<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"22\" r=\"9\"/><path d=\"M50 32v25\"/><path d=\"M50 40 29 57M50 40l21 17\"/><path d=\"M29 57 50 69l21-12\"/><path d=\"M24 69q26 11 52 0\"/></svg>",
+    "seated": "<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"22\" r=\"9\"/><path d=\"M50 32v25\"/><path d=\"M50 40 29 57M50 40l21 17\"/><path d=\"M29 57 50 69l21-12\"/><path d=\"M24 69q26 11 52 0\"/></svg>",
+    "breath": "<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 58q13-26 26 0t26 0 26 0\"/><path d=\"M10 76q13-16 26 0t26 0 26 0\"/></svg>",
+    "standing": "<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"18\" r=\"9\"/><path d=\"M50 28v34M50 62l-11 24M50 62l11 24M36 40h28\"/></svg>"
+  },
+
+  "megaLabels": { "meditation": "Meditation" },
+  "megaColors": { "meditation": "#b48aff" },
+  "importanceDefaults": { "meditation": 4 },
+  "esotericDefaults": { "meditation": 1 },
+  "importanceMap": { "sitting-meditation": 5 },
+  "esotericMap": { "sitting-meditation": 1 },
+  "difficultyOverrides": {
+    "breath-awareness": "beg",
+    "counted-breath": "beg",
+    "body-settling": "beg"
+  },
+  "subFiltersByMega": {},
+
+  "bodyLabels": {
+    "hips": "Hips", "spine": "Spine", "shoulders": "Shoulders", "hands": "Hands",
+    "head": "Head/Neck", "gaze": "Eyes", "jaw": "Jaw", "breath": "Breathing"
+  },
+  "equipLabels": { "seat": "Seat", "surface": "Surface", "clothing": "Clothing", "timer": "Timer" },
+  "positionDefaults": {
+    "sitting-meditation": {
+      "body": {
+        "hips": "A little higher than the knees — sit on the front edge of a cushion or chair",
+        "spine": "Upright and stacked, following its natural curves. Tall, not braced",
+        "shoulders": "Let them drop. Nothing held",
+        "hands": "Resting in the lap or on the thighs, wherever they are forgotten soonest",
+        "head": "Balanced over the shoulders, chin very slightly down",
+        "gaze": "Eyes closed, or open and soft on a spot a metre or two ahead",
+        "jaw": "Unclenched, teeth apart, tongue loose",
+        "breath": "Ordinary. You are watching it, not running it"
+      },
+      "equipment": {
+        "seat": "Chair, cushion, folded blanket or bench — whatever lets you sit upright without strain",
+        "surface": "Stable and level; feet flat on the floor if you're on a chair",
+        "clothing": "Loose enough at the waist to breathe freely",
+        "timer": "Use the app's timer so you never have to check the clock"
+      }
+    }
+  },
+
+  "exercises": [
+    {
+      "id": "sitting-meditation",
+      "title": "Sitting Meditation",
+      "tag": "Meditation • Foundation",
+      "mega": "meditation",
+      "sub": "seated",
+      "icon": "meditation",
+      "keywords": "sitting meditation mindfulness breath attention focus beginner basic starter",
+      "quickCue": "Sit still, let the breath stay ordinary, and begin again every time you notice you have drifted. The returning is the practice.",
+      "general": {
+        "setup": [
+          "Pick a seat — chair, cushion or bench — that lets your hips sit a little above your knees",
+          "Choose somewhere you won't be interrupted for the length of the sit",
+          "Silence your phone; the timer will tell you when you're done",
+          "Decide the length before you start, and don't renegotiate it once you're sitting"
+        ],
+        "movement": [
+          "Sit down and let the body arrive for a few breaths before doing anything",
+          "Set the posture: upright but not stiff, hands resting, shoulders dropped",
+          "Close the eyes, or lower them to a soft point a metre or two ahead",
+          "Take three slower breaths to mark the beginning",
+          "Let the breath go back to its own rhythm — you are watching it, not steering it",
+          "Put your attention on one place where the breath is obvious: the nostrils, the chest, or the belly",
+          "Stay with one breath at a time. Not the last one, not the next one",
+          "Sooner or later you'll notice you've been thinking about something else. That noticing is the practice working",
+          "Note briefly where the mind went, without grading it, and bring attention back to the same place",
+          "Repeat that returning for the rest of the time, as many times as it takes — ten or a hundred, it makes no difference",
+          "When the bell sounds, take one deliberate breath before you move, then open your eyes slowly"
+        ],
+        "mistakes": [
+          "Trying to stop thinking — noticing thoughts is the practice, not a failure at it",
+          "Forcing the breath into a pattern. Let it be as boring as it wants",
+          "Sitting rigid. Upright, not braced — tension in the shoulders and jaw is the usual giveaway",
+          "Grading the sit good or bad afterwards. The only thing that counts is that you sat",
+          "Starting at forty-five minutes. Five or ten daily beats an hour once a fortnight",
+          "Checking how long is left. That's what the timer is for"
+        ]
+      },
+      "variations": [
+        {
+          "id": "breath-awareness",
+          "title": "Breath Awareness",
+          "best": "Start Here",
+          "cue": "One place, one breath, begin again. The whole instruction fits in a sentence.",
+          "setup": [
+            "Settle into the posture and take three slower breaths",
+            "Pick your spot — nostrils, chest or belly — and keep it for the whole sit"
+          ],
+          "movement": [
+            "Rest attention on the chosen spot",
+            "Feel the beginning, middle and end of one in-breath",
+            "Feel the small pause, then the out-breath, all the way to its end",
+            "Do that again with the next breath",
+            "When you find you've drifted, note it and come back to the same spot",
+            "Keep going until the bell"
+          ],
+          "mistakes": [
+            "Moving the spot around mid-sit, looking for a better one",
+            "Deepening the breath so it's easier to feel — that's a different practice",
+            "Adding effort each time you drift. Come back lightly"
+          ],
+          "programming": { "Time": "10 min", "Frequency": "Daily", "Posture": "Seated", "Eyes": "Closed or soft" },
+          "tip": "If the breath is hard to feel, rest a hand on the belly for the first minute and follow the hand instead."
+        },
+        {
+          "id": "counted-breath",
+          "title": "Counted Breaths",
+          "best": "Busy Mind",
+          "cue": "Count out-breaths one to ten, then start at one again. Lost count? Start at one again.",
+          "setup": [
+            "Settle into the posture and take three slower breaths",
+            "Decide that the count goes on the out-breath"
+          ],
+          "movement": [
+            "Breathe in normally, and on the out-breath count 'one' silently",
+            "Next out-breath, 'two' — and so on up to ten",
+            "At ten, drop back to one and go again",
+            "If you notice the count has run past ten, or you can't remember the number, start again at one",
+            "Starting again is not a penalty; it's the whole exercise",
+            "Continue until the bell"
+          ],
+          "mistakes": [
+            "Counting so deliberately that the counting becomes louder than the breathing",
+            "Treating a lost count as evidence you're bad at this",
+            "Speeding the breath up to reach ten"
+          ],
+          "programming": { "Time": "10 min", "Frequency": "Daily", "Posture": "Seated", "Count": "1–10, repeating" },
+          "tip": "A busy or sleepy mind holds a count better than it holds bare attention. Use this one on hard days."
+        },
+        {
+          "id": "body-settling",
+          "title": "Body Settling",
+          "best": "Before You Sit",
+          "cue": "Two or three minutes of feeling where the body meets the seat, to arrive before you start.",
+          "setup": [
+            "Sit down without arranging yourself yet",
+            "Let the breath do whatever it is already doing"
+          ],
+          "movement": [
+            "Feel the contact between your feet and the floor",
+            "Feel where your seat meets the chair or cushion, and how the weight sits on it",
+            "Feel the hands where they rest, and their temperature",
+            "Notice the whole shape of the body sitting there, all at once",
+            "Let anything that is obviously held — shoulders, jaw, forehead — go slack",
+            "Take one longer out-breath, and go on into the sit"
+          ],
+          "mistakes": [
+            "Turning it into a search for tension to fix",
+            "Spending the whole session here — two or three minutes is the point"
+          ],
+          "programming": { "Time": "3 min", "Frequency": "Before any sit", "Posture": "Seated" },
+          "tip": "Use this as the first step of a longer session rather than a practice on its own."
+        }
+      ]
+    }
+  ],
+
+  "seedPlans": [
+    {
+      "id": "seed-first-sit",
+      "name": "First Sit",
+      "desc": "Five minutes to find out what sitting is actually like.",
+      "steps": [
+        { "exId": "sitting-meditation", "varId": "body-settling", "min": 2 },
+        { "exId": "sitting-meditation", "varId": "breath-awareness", "min": 3 }
+      ]
+    },
+    {
+      "id": "seed-daily-ten",
+      "name": "Daily Ten",
+      "desc": "A ten-minute sit you can repeat every morning.",
+      "steps": [
+        { "exId": "sitting-meditation", "varId": "body-settling", "min": 2 },
+        { "exId": "sitting-meditation", "varId": "breath-awareness", "min": 8 }
+      ]
+    },
+    {
+      "id": "seed-hard-day",
+      "name": "Hard Day",
+      "desc": "For when the mind won't stay put — counting gives it a handrail.",
+      "steps": [
+        { "exId": "sitting-meditation", "varId": "counted-breath", "min": 10 }
+      ]
+    }
+  ],
+
+  "avatarClips": {},
+  "avatarByEx": { "sitting-meditation": "seated" },
+  "avatarDefaultsByMega": { "meditation": "seated" },
+
+  "glossaryCategories": [
+    { "id": "all", "label": "All" },
+    { "id": "method", "label": "Method" },
+    { "id": "breath", "label": "Breath" },
+    { "id": "mindful", "label": "Attention" },
+    { "id": "cues", "label": "Posture" }
+  ],
+  "glossary": [
+    { "term": "Anchor", "cat": "method", "def": "The one thing you keep coming back to — usually the feeling of the breath at a chosen spot. Having a single anchor is what makes it possible to notice you've left it." },
+    { "term": "Attention", "cat": "mindful", "def": "What you are aware of right now. It moves on its own constantly; meditation is not about pinning it down but about noticing where it has gone and returning it." },
+    { "term": "Beginning again", "cat": "method", "aka": "starting over", "def": "Returning attention to the anchor after it has wandered. The single most repeated action in the practice, and the one that actually trains anything." },
+    { "term": "Breath awareness", "cat": "breath", "def": "Watching the breath without changing it. The distinction matters: as soon as you are lengthening or deepening, you are doing a breathing exercise instead." },
+    { "term": "Contact points", "cat": "cues", "def": "The places where the body meets the floor, seat or itself. Easy sensations to find, which makes them a reliable way to settle before a sit." },
+    { "term": "Mind-wandering", "cat": "mindful", "aka": "drifting", "def": "Attention leaving the anchor for a thought, plan or memory, usually without you noticing at the time. Expected, frequent, and not a mistake." },
+    { "term": "Noting", "cat": "method", "def": "Naming what pulled attention away — 'planning', 'sound', 'itch' — briefly and without comment, before returning. Keeps you from getting drawn into the content." },
+    { "term": "Posture", "cat": "cues", "def": "Upright and stable enough to stay awake, relaxed enough to stay still. Chair, cushion or bench are equally valid; hips slightly above the knees is the usual advice." },
+    { "term": "Session", "cat": "method", "def": "One continuous sit of a decided length. Deciding the length before you start, and not renegotiating it once you're sitting, is most of the discipline." },
+    { "term": "Settling", "cat": "method", "def": "The first minutes of a sit, where the body arrives and the obvious tension drops. Skipping it usually means spending the whole session fidgeting." },
+    { "term": "Soft gaze", "cat": "cues", "def": "Eyes open but unfocused, resting on a spot a metre or two ahead and slightly down. An alternative to closed eyes if you get drowsy." },
+    { "term": "Sitting still", "cat": "cues", "def": "Not moving for the length of the sit, including small adjustments. Stillness is a decision, not a feeling — the urge to shift usually passes if you watch it instead of obeying it." }
+  ]
+}

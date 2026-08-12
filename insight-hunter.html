@@ -1,0 +1,3039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0a14">
+<title>InsightHunter</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230c0a14'/%3E%3Ccircle cx='256' cy='256' r='130' fill='none' stroke='%23b48aff' stroke-width='34' stroke-linecap='round' stroke-dasharray='700 117' transform='rotate(-55 256 256)'/%3E%3Cpolygon points='332,112 396,96 380,160' fill='%23b48aff'/%3E%3Ccircle cx='256' cy='256' r='26' fill='%23b48aff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  /* ============ base (from the Mind-Body guide, kept verbatim where possible) ============ */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0c0a14; color: #e8e6f0; line-height: 1.5; }
+  header#app-header { position: sticky; top: 0; background: #0c0a14; border-bottom: 1px solid #221c30; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0 14px; z-index: 100; }
+  h1 { font-size: 17px; margin: 0 0 8px 0; color: #fff; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  h1 .stamp { font-size: 10px; color: #6a5a8a; font-weight: 400; letter-spacing: 0.3px; }
+  .title-row { display: flex; justify-content: space-between; align-items: center; }
+  #streak-chip { font-size: 12px; font-weight: 700; color: #ffaa6f; background: #38241a; border-radius: 10px; padding: 4px 10px; }
+  #streak-chip.zero { color: #887a9a; background: #1a1626; }
+  .tabbar { display: flex; gap: 4px; overflow-x: auto; padding: 2px 0 8px 0; -webkit-overflow-scrolling: touch; }
+  .tab { flex-shrink: 0; padding: 8px 12px; background: #1a1626; border: 1px solid #2e2640; border-radius: 10px; color: #aaa; font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; user-select: none; }
+  .tab.active { background: #3a2a4d; color: #fff; border-color: #5a3a7d; }
+  /* every control is reachable by keyboard, so every control shows where focus is */
+  :focus-visible { outline: 2px solid #b48aff; outline-offset: 2px; }
+  main { padding: 10px 14px 90px 14px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ============ library (guide CSS verbatim) ============ */
+  .search-row { display: flex; gap: 6px; }
+  #search { flex: 1; padding: 11px 13px; font-size: 16px; background: #1a1626; border: 1px solid #2e2640; border-radius: 10px; color: #fff; outline: none; }
+  #search:focus { border-color: #b48aff; }
+  #clear-btn { padding: 0 13px; background: #1a1626; border: 1px solid #2e2640; border-radius: 10px; color: #998; font-size: 14px; cursor: pointer; }
+  .mega-filter { display: flex; gap: 5px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .mega-pill { flex-shrink: 0; padding: 8px 13px; background: #1a1626; border: 1px solid #2e2640; border-radius: 10px; color: #aaa; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  /* category colours come from the content pack (megaColors) — the app carries no taxonomy */
+  .mega-pill.active { background: var(--mc, #888); border-color: var(--mc, #888); color: #0a0a0a; }
+  .mega-pill.active.on-dark { color: #fff; }
+  .filter-pills { display: flex; gap: 5px; margin-top: 7px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+  .pill { padding: 5px 11px; background: #1a1626; border: 1px solid #2e2640; border-radius: 14px; color: #aaa; font-size: 12px; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+  .pill.active { background: #3a2a4d; color: #fff; border-color: #5a3a7d; }
+  .results-count { font-size: 11px; color: #6a5a8a; text-transform: uppercase; letter-spacing: 0.6px; margin: 8px 0; }
+  .exercise { background: #14101e; border: 1px solid #221c30; border-radius: 11px; margin-bottom: 8px; overflow: hidden; }
+  .exercise-header { padding: 12px 14px; display: grid; grid-template-columns: 44px 1fr auto; grid-template-areas: "icon info chevron" "badges badges badges"; gap: 8px 10px; cursor: pointer; user-select: none; align-items: center; }
+  .exercise-header > .ex-icon { grid-area: icon; }
+  .exercise-header > .ex-info { grid-area: info; }
+  .exercise-header > .chevron { grid-area: chevron; }
+  .exercise-header > .badge-row { grid-area: badges; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .exercise-header:active { background: #1a1428; }
+  .ex-icon { width: 44px; height: 44px; flex-shrink: 0; background: #1f1830; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 4px; }
+  .ex-icon svg { width: 100%; height: 100%; color: #b8a8d8; }
+  .ex-info { min-width: 0; overflow: hidden; }
+  .ex-title { font-size: 15px; font-weight: 600; color: #fff; line-height: 1.25; word-break: break-word; }
+  .ex-sanskrit { font-size: 11px; color: #a090c0; font-style: italic; margin-top: 1px; word-break: break-word; }
+  .ex-tag { font-size: 10.5px; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+  .mega-badge { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+  .mega-badge { background: #1f1830; color: var(--mc, #b48aff);
+    background: color-mix(in srgb, var(--mc, #b48aff) 20%, #14101e); }
+  .importance { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+  .importance.t5 { background: #4a1818; color: #ff8080; }
+  .importance.t4 { background: #3a2418; color: #ffb060; }
+  .importance.t3 { background: #2a2a18; color: #e0d060; }
+  .importance.t2 { background: #182a2a; color: #80c0c0; }
+  .importance.t1 { background: #1a1a2a; color: #8888a0; }
+  .importance-stars { font-size: 11px; letter-spacing: 1px; }
+  .difficulty { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
+  .difficulty.beg { background: #18301a; color: #80e090; }
+  .difficulty.int { background: #1a2838; color: #80b8ff; }
+  .difficulty.adv { background: #38201a; color: #ff9070; }
+  .difficulty.exp { background: #3a1832; color: #ff80b8; }
+  .esoteric { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
+  .esoteric.e1 { background: #1a2a1a; color: #70d090; }
+  .esoteric.e2 { background: #1a2838; color: #80b8ff; }
+  .esoteric.e3 { background: #2a2418; color: #d8c060; }
+  .esoteric.e4 { background: #2a1838; color: #c898ff; }
+  .esoteric.e5 { background: #38182a; color: #ff80d0; }
+  .esoteric-glyph { font-size: 9px; letter-spacing: 0.5px; }
+  .chevron { color: #5a4a7a; font-size: 12px; transition: transform 0.2s; flex-shrink: 0; }
+  .exercise.open > .exercise-header .chevron { transform: rotate(90deg); }
+  .exercise-body { display: none; padding: 0 14px 14px 14px; border-top: 1px solid #221c30; }
+  .exercise.open > .exercise-body { display: block; }
+  .big-icon { width: 100%; height: 100px; background: #1a1626; border-radius: 8px; margin-top: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; }
+  .big-icon svg { width: 100%; height: 100%; max-width: 180px; color: #aa90d0; }
+  .section { margin-top: 12px; }
+  .section-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.7px; color: #b48aff; margin-bottom: 5px; font-weight: 700; }
+  .section-title.warn { color: #e2944a; }
+  .section-title.tip { color: #5fd068; }
+  .section-title.danger { color: #e25555; }
+  .section-title.var { color: #c98aff; }
+  .section-content { font-size: 13.5px; color: #d0c8e0; }
+  .section-content ul { margin: 0; padding-left: 16px; }
+  .section-content li { margin-bottom: 3px; }
+  .section-content strong { color: #fff; }
+  .programming-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12.5px; }
+  .programming-grid div:nth-child(odd) { color: #888; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.5px; align-self: center; }
+  .no-results { text-align: center; color: #666; padding: 40px 20px; font-size: 14px; }
+
+  /* recipe grid view */
+  .results-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+  .results-row .results-count { flex: 1; min-width: 90px; }
+  .results-row .mini { font-size: 11.5px; padding: 5px 7px; }
+  button.pill { font-family: inherit; }
+  .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .recipe-card { background: #14101e; border: 1px solid #241c34; border-radius: 12px; padding: 12px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; user-select: none; }
+  .recipe-card:active { background: #1a1428; }
+  .recipe-card .rc-icon, .sheet-head .rc-icon { color: #b8a8d8; }
+  .recipe-card .rc-icon { width: 46px; height: 46px; }
+  .rc-icon svg { width: 100%; height: 100%; }
+  .recipe-card .rc-title { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.25; }
+  .recipe-card .rc-sanskrit { font-size: 10.5px; color: #a090c0; font-style: italic; }
+  .rc-meta { font-size: 9.5px; color: #887a9a; text-transform: uppercase; letter-spacing: 0.4px; }
+  .rc-badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .recipe-glance { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px 0; align-items: center; }
+  .section-content ol { margin: 0; padding-left: 20px; }
+  .section-content ol li { margin-bottom: 4px; }
+  .quick-cue { background: #1a1626; border-left: 3px solid #b48aff; padding: 9px 11px; border-radius: 5px; margin-top: 8px; font-size: 13px; font-style: italic; color: #c8b8e0; }
+  .quick-cue { border-left-color: var(--mc, #b48aff); }
+  .variations-wrap { margin-top: 8px; }
+  .variation { background: #1a1626; border: 1px solid #2a2238; border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+  .variation-header { padding: 9px 12px; display: grid; grid-template-columns: 1fr auto; grid-template-areas: "title chevron" "badges badges"; gap: 6px 8px; cursor: pointer; user-select: none; align-items: center; }
+  .variation-header > .var-title { grid-area: title; }
+  .variation-header > .var-chev { grid-area: chevron; }
+  .variation-header > .var-badge-row { grid-area: badges; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .variation-header:active { background: #221a32; }
+  .var-title { font-size: 13.5px; font-weight: 600; color: #e8d4ff; line-height: 1.3; word-break: break-word; min-width: 0; }
+  .var-best { font-size: 9.5px; background: #3a2a4d; color: #d4b3ff; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; }
+  .var-chev { color: #777; font-size: 11px; transition: transform 0.2s; flex-shrink: 0; }
+  .variation.open .var-chev { transform: rotate(90deg); }
+  .variation-body { display: none; padding: 0 12px 11px 12px; border-top: 1px solid #2a2238; }
+  .variation.open .variation-body { display: block; }
+  .var-cue { background: #14101a; border-left: 2px solid #c98aff; padding: 7px 10px; border-radius: 4px; margin-top: 8px; font-size: 12.5px; font-style: italic; color: #c8b8d8; }
+  .var-section { margin-top: 9px; }
+  .var-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c98aff; margin-bottom: 4px; font-weight: 700; }
+  .var-section-title.warn { color: #e2944a; }
+  .var-section-content { font-size: 12.5px; color: #c8c0d8; }
+  .var-section-content ul { margin: 0; padding-left: 15px; }
+  .var-section-content li { margin-bottom: 2px; }
+  .position-toggle { background: #20182a; border: 1px solid #3a2a4a; color: #c8b8d8; padding: 7px 10px; border-radius: 6px; font-size: 11.5px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-weight: 600; }
+  .position-toggle:active { background: #2a1f3a; }
+  .position-toggle .pos-chev { font-size: 10px; transition: transform 0.2s; }
+  .position-wrap.open .position-toggle .pos-chev { transform: rotate(90deg); }
+  .position-table { display: none; margin-top: 6px; background: #141018; border-radius: 6px; padding: 6px 8px; border: 1px solid #2a1f3a; }
+  .position-wrap.open .position-table { display: block; }
+  .position-row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; padding: 4px 2px; border-bottom: 1px solid #20182a; font-size: 12px; }
+  .position-row:last-child { border-bottom: none; }
+  .position-row .pos-label { color: #a090b8; text-transform: uppercase; letter-spacing: 0.4px; font-size: 9.5px; font-weight: 700; align-self: center; }
+  .position-row .pos-val { color: #d8d0e0; }
+  .position-section-title { font-size: 9.5px; color: #c98aff; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; padding: 5px 2px 2px 2px; border-bottom: 1px solid #3a2a4a; margin-top: 6px; }
+  .position-section-title:first-child { margin-top: 0; padding-top: 2px; }
+
+  /* ============ glossary panel (guide CSS verbatim) ============ */
+  .gloss-btn { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; width: 56px; height: 56px; border-radius: 50%; background: #aa6fff; color: #0a0a0a; border: none; font-size: 22px; font-weight: 700; cursor: pointer; z-index: 200; box-shadow: 0 4px 14px rgba(170, 111, 255, 0.4); display: flex; align-items: center; justify-content: center; }
+  .gloss-btn:active { transform: scale(0.95); }
+  .gloss-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .gloss-backdrop.open { opacity: 1; pointer-events: auto; }
+  .gloss-panel { position: fixed; top: 0; right: 0; width: 92%; max-width: 420px; height: 100%; background: #0c0a14; border-left: 1px solid #2e2640; z-index: 310; transform: translateX(100%); transition: transform 0.3s ease-out; display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,0.5); }
+  .gloss-panel.open { transform: translateX(0); }
+  .gloss-header { padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 8px 14px; border-bottom: 1px solid #221c30; background: #0c0a14; }
+  .gloss-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .gloss-title { font-size: 16px; font-weight: 600; color: #fff; margin: 0; }
+  .gloss-close { background: #1a1626; border: 1px solid #2e2640; color: #aaa; padding: 6px 12px; border-radius: 8px; font-size: 16px; cursor: pointer; line-height: 1; }
+  .gloss-close:active { background: #2a2238; }
+  .gloss-search-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  #gloss-search { flex: 1; padding: 9px 11px; font-size: 15px; background: #1a1626; border: 1px solid #2e2640; border-radius: 8px; color: #fff; outline: none; }
+  #gloss-search:focus { border-color: #aa6fff; }
+  #gloss-clear { padding: 0 11px; background: #1a1626; border: 1px solid #2e2640; border-radius: 8px; color: #888; cursor: pointer; }
+  .gloss-cat-filter { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .gloss-cat-pill { padding: 4px 10px; background: #1a1626; border: 1px solid #2e2640; border-radius: 12px; color: #aaa; font-size: 11px; white-space: nowrap; cursor: pointer; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.3px; }
+  .gloss-cat-pill.active { background: #3a2a4d; color: #fff; border-color: #5a3a7d; }
+  .gloss-body { flex: 1; overflow-y: auto; padding: 8px 14px calc(30px + env(safe-area-inset-bottom, 0px)) 14px; -webkit-overflow-scrolling: touch; }
+  .gloss-count { font-size: 10.5px; color: #6a5a8a; text-transform: uppercase; letter-spacing: 0.6px; margin: 8px 0; }
+  .gloss-letter-header { font-size: 22px; font-weight: 700; color: #aa6fff; padding: 10px 0 4px 0; border-bottom: 1px solid #2a1f3a; margin-top: 12px; letter-spacing: 1px; }
+  .gloss-letter-header:first-child { margin-top: 0; }
+  .gloss-entry { padding: 10px 0; border-bottom: 1px solid #1a1426; }
+  .gloss-entry:last-child { border-bottom: none; }
+  .gloss-term-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .gloss-term { font-size: 14.5px; font-weight: 700; color: #fff; }
+  .gloss-aka { font-size: 11.5px; color: #888; font-style: italic; }
+  .gloss-cat-badge { font-size: 8.5px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+  .gloss-cat-badge.yoga { background: #1a3018; color: #80e090; }
+  .gloss-cat-badge.pilates { background: #103030; color: #80e0e0; }
+  .gloss-cat-badge.taichi { background: #382f10; color: #ffe480; }
+  .gloss-cat-badge.anatomy { background: #3a1a1a; color: #ff9090; }
+  .gloss-cat-badge.cues { background: #281838; color: #c098ff; }
+  .gloss-cat-badge.breath { background: #3a1828; color: #ff80b0; }
+  .gloss-cat-badge.mobility { background: #3a2818; color: #ffb868; }
+  .gloss-cat-badge.method { background: #2a2a18; color: #e0d060; }
+  .gloss-cat-badge.recovery { background: #1a2838; color: #a0d8ff; }
+  .gloss-cat-badge.mindful { background: #2a1a2a; color: #ff90d0; }
+  .gloss-cat-badge.subtle { background: #38241a; color: #ffc09a; }
+  .gloss-cat-badge.tradition { background: #1f1830; color: #c0a8ff; }
+  .gloss-def { font-size: 12.5px; color: #c8c0d4; line-height: 1.5; }
+  .gloss-def strong { color: #fff; }
+  .gloss-no-results { text-align: center; color: #666; padding: 40px 20px; font-size: 13px; }
+
+  /* ============ app chrome ============ */
+  .card { background: #14101e; border: 1px solid #221c30; border-radius: 11px; padding: 12px 14px; margin-bottom: 10px; }
+  .card h2 { font-size: 14px; margin: 0 0 8px 0; color: #fff; }
+  .card .sub { font-size: 12px; color: #887a9a; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 14px; background: #1a1626; border: 1px solid #2e2640; border-radius: 10px; color: #d0c8e0; font-size: 13.5px; font-weight: 600; cursor: pointer; user-select: none; }
+  .btn:active { background: #241c34; }
+  .btn.primary { background: #3a2a4d; border-color: #5a3a7d; color: #fff; }
+  .btn.accent { background: #aa6fff; border-color: #aa6fff; color: #0a0a0a; }
+  .btn.danger { background: #2a1418; border-color: #4a2028; color: #ff8080; }
+  .btn.good { background: #16281a; border-color: #2a4a30; color: #80e090; }
+  .btn.small { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+  .btn.big { width: 100%; padding: 15px; font-size: 15px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .ex-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .fav-star { color: #ffd24a; }
+  .muted { color: #887a9a; font-size: 12px; }
+  .spacer { flex: 1; }
+
+  /* practice */
+  .elapsed-strip { display: flex; align-items: baseline; gap: 10px; }
+  .elapsed-strip .clock { font-size: 30px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+  .entry-row { display: flex; align-items: center; gap: 9px; padding: 9px 0; border-bottom: 1px solid #1c1628; }
+  .entry-row:last-child { border-bottom: none; }
+  .entry-row .e-icon { width: 30px; height: 30px; flex-shrink: 0; background: #1f1830; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 3px; }
+  .entry-row .e-icon svg { width: 100%; height: 100%; color: #b8a8d8; }
+  .entry-row .e-name { flex: 1; min-width: 0; font-size: 13.5px; color: #e8e6f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entry-row .e-name .v { color: #a090c0; font-size: 11.5px; }
+  .entry-row .e-min { font-size: 13px; font-weight: 700; color: #b48aff; white-space: nowrap; }
+  .entry-x { background: none; border: none; color: #66566e; font-size: 15px; cursor: pointer; padding: 4px 6px; }
+  .entry-x:active { color: #ff8080; }
+  .session-note { width: 100%; background: #1a1626; border: 1px solid #2e2640; border-radius: 8px; color: #e8e6f0; font-size: 13px; padding: 9px 11px; margin-top: 8px; font-family: inherit; resize: vertical; min-height: 38px; }
+  .beat-chip { font-size: 12px; padding: 6px 10px; border-radius: 8px; margin-top: 8px; display: inline-block; }
+  .beat-chip.ahead { background: #16281a; color: #80e090; }
+  .beat-chip.behind { background: #2a2418; color: #d8c060; }
+  .quickstart-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .goal-line { display: flex; justify-content: space-between; font-size: 11.5px; color: #887a9a; margin-top: 10px; }
+  .goal-line .g { color: #b48aff; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .e-min-edit { width: 58px; text-align: right; background: #1a1626; border: 1px solid #2e2640; border-radius: 7px; color: #b48aff; font-size: 13px; font-weight: 700; font-family: inherit; padding: 5px 6px; }
+  .ex-hist { display: block; width: 100%; text-align: left; font-size: 11.5px; font-family: inherit; color: #887a9a; background: #1a1626; border: 1px solid #2e2640; border-radius: 7px; padding: 7px 10px; margin-top: 8px; cursor: pointer; }
+  .ex-hist strong { color: #b48aff; }
+  .ex-hist:active { background: #241c34; }
+  /* how the session felt — the mind-body analogue of a load metric */
+  .feel-row { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .feel { flex: 1; min-width: 52px; background: #1a1626; border: 1px solid #2e2640; border-radius: 9px; font-size: 20px; padding: 6px 0; cursor: pointer; line-height: 1.2; }
+  .feel .fl { display: block; font-size: 9px; letter-spacing: 0.3px; color: #887a9a; text-transform: uppercase; }
+  .feel.on { background: #3a2a4d; border-color: #b48aff; }
+  .feel.on .fl { color: #d8c8ff; }
+
+  /* picker + sheets + dialogs */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 400; display: flex; align-items: flex-end; justify-content: center; }
+  .overlay.center { align-items: center; padding: 20px; }
+  .sheet { background: #14101e; border: 1px solid #2e2640; border-radius: 16px 16px 0 0; width: 100%; max-width: 560px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .overlay.center .sheet { border-radius: 14px; max-height: 80vh; padding-bottom: 0; }
+  .sheet-head { padding: 12px 14px; border-bottom: 1px solid #221c30; display: flex; align-items: center; gap: 8px; }
+  .sheet-head .t { font-size: 15px; font-weight: 700; color: #fff; flex: 1; min-width: 0; }
+  .sheet-body { padding: 12px 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .sheet-foot { padding: 10px 14px; border-top: 1px solid #221c30; display: flex; gap: 8px; }
+  .sheet-foot .btn { flex: 1; }
+  .picker-search { width: 100%; padding: 10px 12px; font-size: 15px; background: #1a1626; border: 1px solid #2e2640; border-radius: 9px; color: #fff; outline: none; margin-bottom: 8px; }
+  .picker-row { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 1px solid #1c1628; cursor: pointer; border-radius: 6px; }
+  .picker-row:active { background: #1a1428; }
+  .picker-row .p-icon { width: 34px; height: 34px; flex-shrink: 0; background: #1f1830; border-radius: 7px; display: flex; align-items: center; justify-content: center; padding: 3px; }
+  .picker-row .p-icon svg { width: 100%; height: 100%; color: #b8a8d8; }
+  .picker-row .p-info { flex: 1; min-width: 0; }
+  .picker-row .p-title { font-size: 13.5px; font-weight: 600; color: #fff; }
+  .picker-row .p-sub { font-size: 10.5px; color: #887a9a; }
+  .minute-stepper { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; }
+  .minute-stepper .val { font-size: 34px; font-weight: 700; color: #fff; min-width: 90px; text-align: center; font-variant-numeric: tabular-nums; }
+  .minute-stepper .btn { padding: 10px 14px; font-size: 16px; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 6px; }
+  .var-select { width: 100%; background: #1a1626; border: 1px solid #2e2640; border-radius: 9px; color: #e8e6f0; font-size: 13.5px; padding: 10px 11px; margin-top: 4px; }
+  .dialog-msg { font-size: 13.5px; color: #d0c8e0; margin: 4px 0 12px 0; white-space: pre-line; }
+  .toast { position: fixed; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: #3a2a4d; border: 1px solid #5a3a7d; color: #fff; font-size: 13px; padding: 9px 16px; border-radius: 10px; z-index: 600; opacity: 0; transition: opacity 0.25s; pointer-events: none; max-width: 88%; text-align: center; }
+  .toast.show { opacity: 1; }
+  /* the toast ignores pointers so it never blocks the UI — its Undo button does not */
+  .toast-undo { pointer-events: auto; margin-left: 10px; background: #b48aff; border: none; color: #17101f; font-family: inherit; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 7px; cursor: pointer; }
+
+  /* practice avatar */
+  .avatar-box { width: 100%; max-width: 260px; margin: 2px auto 0 auto; position: relative; }
+  .avatar-box.preview { max-width: 180px; margin-top: 8px; }
+  /* fixed height, cropped viewBox: every pose fills the same box (see avClipBounds) */
+  .av-svg { width: 100%; height: 148px; display: block; touch-action: none; cursor: grab; }
+  .avatar-box.preview .av-svg { height: 112px; }
+  .av-svg:active { cursor: grabbing; }
+  .av-bone { stroke: #b48aff; }
+  .av-head { fill: #d8c8ff; }
+  .av-caption { text-align: center; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: #8a7aa8; height: 14px; }
+
+  /* timer overlay */
+  .timer-wrap { position: fixed; inset: 0; background: #0c0a14; z-index: 500; display: flex; flex-direction: column; align-items: center; padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px)) 16px; overflow-y: auto; }
+  .timer-name { font-size: 18px; font-weight: 700; color: #fff; text-align: center; }
+  .timer-sanskrit { font-size: 12.5px; color: #a090c0; font-style: italic; text-align: center; }
+  .timer-step-label { font-size: 11px; color: #b48aff; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; font-weight: 700; }
+  .timer-ring-box { position: relative; width: min(62vw, 250px); height: min(62vw, 250px); margin: 14px 0 6px 0; flex-shrink: 0; }
+  .timer-ring-box svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring-box .t-time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+  .timer-ring-box .t-time .t-sub { font-size: 11px; color: #887a9a; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
+  .timer-controls { display: flex; gap: 9px; margin: 10px 0 14px 0; flex-wrap: wrap; justify-content: center; }
+  .timer-steps { width: 100%; max-width: 480px; background: #14101e; border: 1px solid #221c30; border-radius: 11px; padding: 12px 14px 12px 14px; }
+  .timer-steps .ts-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.7px; color: #b48aff; margin-bottom: 6px; font-weight: 700; }
+  .timer-steps ol { margin: 0; padding-left: 20px; font-size: 13.5px; color: #d0c8e0; }
+  .timer-steps ol li { margin-bottom: 5px; transition: color 0.2s, opacity 0.2s; }
+  .timer-steps ol li.done { opacity: 0.4; }
+  .timer-steps ol li.cur { color: #fff; font-weight: 700; }
+  .timer-steps ol li.cur::marker { color: #b48aff; }
+  .timer-steps .setup-line { font-size: 12px; color: #887a9a; margin-bottom: 8px; font-style: italic; }
+  /* the step the timer is walking you through right now */
+  .timer-cue { width: 100%; max-width: 480px; background: #14101e; border: 1px solid #2e2640; border-radius: 11px; padding: 9px 13px; margin-top: 9px; font-size: 13.5px; color: #e8e6f0; text-align: center; }
+  .timer-cue .n { display: block; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.8px; color: #b48aff; font-weight: 700; margin-bottom: 3px; }
+
+  /* history calendar */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cal-head .m { font-size: 14px; font-weight: 700; color: #fff; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { font-size: 9.5px; color: #6a5a8a; text-align: center; text-transform: uppercase; padding: 2px 0; }
+  .cal-day { aspect-ratio: 1; border-radius: 8px; background: #14101e; border: 1px solid #1c1628; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #887a9a; cursor: pointer; gap: 2px; }
+  .cal-day.out { opacity: 0.25; }
+  .cal-day.today { border-color: #b48aff; }
+  .cal-day.sel { background: #3a2a4d; color: #fff; }
+  .cal-day .dot { width: 6px; height: 6px; border-radius: 50%; background: transparent; }
+  .cal-day .dot.d1 { background: #5a4a7a; }
+  .cal-day .dot.d2 { background: #9a7ad0; }
+  .cal-day .dot.d3 { background: #b48aff; box-shadow: 0 0 6px #b48aff88; }
+  .sess-card { background: #14101e; border: 1px solid #221c30; border-radius: 11px; margin-bottom: 8px; overflow: hidden; }
+  .sess-head { padding: 11px 14px; display: flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
+  .sess-head .d { font-size: 13.5px; font-weight: 700; color: #fff; flex: 1; }
+  .sess-head .m { font-size: 12.5px; font-weight: 700; color: #b48aff; white-space: nowrap; }
+  .sess-body { display: none; padding: 0 14px 12px 14px; border-top: 1px solid #221c30; }
+  .sess-card.open .sess-body { display: block; }
+  .sess-card.open .chevron { transform: rotate(90deg); }
+  .plan-chip { font-size: 9.5px; background: #28183a; color: #d8b8ff; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.4px; }
+
+  /* stats */
+  .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .tile { background: #14101e; border: 1px solid #221c30; border-radius: 11px; padding: 11px 12px; }
+  .tile .v { font-size: 21px; font-weight: 700; color: #fff; }
+  .tile .l { font-size: 10px; color: #887a9a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .tile.hot .v { color: #ffaa6f; }
+  .chart-box { width: 100%; overflow-x: auto; }
+  .hbar-row { display: grid; grid-template-columns: 96px 1fr 52px; gap: 8px; align-items: center; margin-bottom: 6px; font-size: 12px; }
+  .hbar-row .hl { color: #c8c0d8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hbar-row .hv { color: #887a9a; text-align: right; font-variant-numeric: tabular-nums; }
+  .hbar-track { height: 12px; background: #1a1626; border-radius: 6px; overflow: hidden; }
+  .hbar-fill { height: 100%; border-radius: 6px; background: #b48aff; }
+  .mile-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1c1628; }
+  .mile-row:last-child { border-bottom: none; }
+  .mile-row .icon { font-size: 18px; width: 26px; text-align: center; }
+  .mile-row .info { flex: 1; min-width: 0; }
+  .mile-row .n { font-size: 13px; font-weight: 600; color: #fff; }
+  .mile-row .p { font-size: 11px; color: #887a9a; }
+  .mile-row.done .n { color: #80e090; }
+  .mile-bar { height: 5px; background: #1a1626; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .mile-bar .f { height: 100%; background: #b48aff; border-radius: 3px; }
+  .hbar-row.tap { cursor: pointer; }
+  .hbar-row.tap:active { opacity: 0.6; }
+  .hbar-row.tap .hl { color: #d8c8ff; }
+  /* a year of practice at a glance — one square per day, scrolls sideways on a phone */
+  .heat-wrap { overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+  .heat-grid { display: grid; grid-template-rows: repeat(7, 11px); grid-auto-flow: column; grid-auto-columns: 11px; gap: 3px; width: max-content; }
+  .heat-months { display: grid; grid-auto-flow: column; grid-auto-columns: 14px; width: max-content; font-size: 9px; color: #6a5a8a; height: 12px; }
+  .heat-cell { border-radius: 2px; background: #17121f; }
+  .heat-cell.h1 { background: #33265a; }
+  .heat-cell.h2 { background: #57409a; }
+  .heat-cell.h3 { background: #8461d6; }
+  .heat-cell.h4 { background: #b48aff; }
+  .heat-cell.today { outline: 1px solid #ffaa6f; outline-offset: 1px; }
+  .heat-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 9.5px; color: #6a5a8a; margin-top: 4px; }
+  .heat-legend .heat-cell { width: 11px; height: 11px; }
+  /* a localStorage-only app has exactly one safety net: the backup you export */
+  .nudge { border-color: #4a3a20; background: #1d1710; }
+  .nudge h2 { color: #ffc98a; }
+
+  /* plans */
+  .plan-card { background: #14101e; border: 1px solid #221c30; border-radius: 11px; margin-bottom: 8px; padding: 12px 14px; }
+  .plan-card .pt { font-size: 14.5px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 7px; }
+  .plan-card .pd { font-size: 12px; color: #887a9a; margin: 3px 0 6px 0; }
+  .plan-steps-preview { font-size: 12px; color: #c8c0d8; margin-bottom: 8px; }
+  .plan-step-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #1c1628; flex-wrap: wrap; }
+  .plan-step-row .step-var { flex-basis: 100%; }
+  .plan-step-row:last-child { border-bottom: none; }
+  .plan-step-row .n { flex: 1; min-width: 0; font-size: 13px; color: #e8e6f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .plan-step-row .mins { font-size: 12.5px; font-weight: 700; color: #b48aff; white-space: nowrap; }
+  .text-input { width: 100%; background: #1a1626; border: 1px solid #2e2640; border-radius: 9px; color: #fff; font-size: 14px; padding: 10px 12px; font-family: inherit; }
+  .field-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #b48aff; margin: 10px 0 4px 0; font-weight: 700; }
+
+  /* settings */
+  .set-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #1c1628; }
+  .set-row:last-child { border-bottom: none; }
+  .set-row .sl { flex: 1; font-size: 13.5px; color: #e8e6f0; }
+  .set-row .sl .d { font-size: 11px; color: #887a9a; }
+  .switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .sl-track { position: absolute; inset: 0; background: #1a1626; border: 1px solid #2e2640; border-radius: 13px; cursor: pointer; transition: background 0.15s; }
+  .switch .sl-track::after { content: ''; position: absolute; top: 2px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #887a9a; transition: transform 0.15s, background 0.15s; }
+  .switch input:checked + .sl-track { background: #3a2a4d; border-color: #5a3a7d; }
+  .switch input:checked + .sl-track::after { transform: translateX(19px); background: #b48aff; }
+  input[type=range] { accent-color: #aa6fff; }
+  select.mini, input.mini { background: #1a1626; border: 1px solid #2e2640; border-radius: 8px; color: #e8e6f0; font-size: 13px; padding: 7px 9px; }
+  .drive-pic { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; background: #1a1626; }
+  .about-block { font-size: 12.5px; color: #a89ac0; line-height: 1.6; }
+  .about-block strong { color: #e8e6f0; }
+</style>
+</head>
+<body>
+
+<header id="app-header">
+  <div class="title-row">
+    <h1><svg class="logo" viewBox="0 0 512 512" width="24" height="24" aria-hidden="true"><circle cx="256" cy="256" r="130" fill="none" stroke="#b48aff" stroke-width="34" stroke-linecap="round" stroke-dasharray="700 117" transform="rotate(-55 256 256)"/><polygon points="332,112 396,96 380,160" fill="#b48aff"/><circle cx="256" cy="256" r="26" fill="#b48aff"/></svg> InsightHunter <span class="stamp" id="build-stamp"></span></h1>
+    <div id="streak-chip"></div>
+  </div>
+  <nav class="tabbar" id="tabbar" role="tablist" aria-label="Sections">
+    <button type="button" class="tab" id="tab-practice" data-tab="practice" role="tab" aria-controls="panel-practice">🧘 Practice</button>
+    <button type="button" class="tab" id="tab-library" data-tab="library" role="tab" aria-controls="panel-library">📚 Library</button>
+    <button type="button" class="tab" id="tab-plans" data-tab="plans" role="tab" aria-controls="panel-plans">🗺️ Plans</button>
+    <button type="button" class="tab" id="tab-history" data-tab="history" role="tab" aria-controls="panel-history">📅 History</button>
+    <button type="button" class="tab" id="tab-stats" data-tab="stats" role="tab" aria-controls="panel-stats">📈 Stats</button>
+    <button type="button" class="tab" id="tab-settings" data-tab="settings" role="tab" aria-controls="panel-settings">⚙️ Settings</button>
+  </nav>
+</header>
+
+<main>
+  <section class="panel" id="panel-practice" role="tabpanel" aria-labelledby="tab-practice"></section>
+
+  <section class="panel" id="panel-library" role="tabpanel" aria-labelledby="tab-library">
+    <div class="search-row">
+      <input type="text" id="search" placeholder="Search the library...  ( / )" autocomplete="off" aria-label="Search the library">
+      <button id="clear-btn" aria-label="Clear search">✕</button>
+    </div>
+    <!-- category pills are rendered from the content pack's vocabulary (renderMegaFilter) -->
+    <div class="mega-filter" id="mega-filter"></div>
+    <div class="filter-pills" id="filters"></div>
+    <div class="results-row">
+      <div class="results-count" id="results-count"></div>
+      <select class="mini" id="lib-sort" aria-label="Sort the library">
+        <option value="default">Guide order</option>
+        <option value="az">A → Z</option>
+        <option value="importance">Most important</option>
+        <option value="esoteric">Most mainstream</option>
+        <option value="short">Shortest first</option>
+      </select>
+      <button class="pill" id="lib-random" title="Show me something new" aria-label="Pick a practice at random">🎲</button>
+      <button class="pill" id="view-toggle" onclick="toggleLibView()">▦ Recipe grid</button>
+    </div>
+    <div id="exercises"></div>
+  </section>
+
+  <section class="panel" id="panel-plans" role="tabpanel" aria-labelledby="tab-plans"></section>
+  <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history"></section>
+  <section class="panel" id="panel-stats" role="tabpanel" aria-labelledby="tab-stats"></section>
+  <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings"></section>
+</main>
+
+<button class="gloss-btn" id="gloss-btn" title="Open glossary" aria-label="Open glossary">📖</button>
+<div class="gloss-backdrop" id="gloss-backdrop"></div>
+<aside class="gloss-panel" id="gloss-panel" aria-label="Glossary">
+  <div class="gloss-header">
+    <div class="gloss-title-row">
+      <h2 class="gloss-title">📖 Mind-Body Glossary</h2>
+      <button class="gloss-close" id="gloss-close" aria-label="Close">✕</button>
+    </div>
+    <div class="gloss-search-row">
+      <input type="text" id="gloss-search" placeholder="Search terms, alternate names..." autocomplete="off">
+      <button id="gloss-clear">✕</button>
+    </div>
+    <div class="gloss-cat-filter" id="gloss-cat-filter"></div>
+  </div>
+  <div class="gloss-body" id="gloss-body"></div>
+</aside>
+
+<div id="overlay-root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- CONTENT PACK — the practice library & glossary. Kept separate from the app:
+     the published build loads it at runtime if present and runs without it. -->
+<script>window.IH_CONTENT = {"icons":{"meditation":"<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"22\" r=\"9\"/><path d=\"M50 32v25\"/><path d=\"M50 40 29 57M50 40l21 17\"/><path d=\"M29 57 50 69l21-12\"/><path d=\"M24 69q26 11 52 0\"/></svg>","seated":"<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"22\" r=\"9\"/><path d=\"M50 32v25\"/><path d=\"M50 40 29 57M50 40l21 17\"/><path d=\"M29 57 50 69l21-12\"/><path d=\"M24 69q26 11 52 0\"/></svg>","breath":"<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 58q13-26 26 0t26 0 26 0\"/><path d=\"M10 76q13-16 26 0t26 0 26 0\"/></svg>","standing":"<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"50\" cy=\"18\" r=\"9\"/><path d=\"M50 28v34M50 62l-11 24M50 62l11 24M36 40h28\"/></svg>"},"megaLabels":{"meditation":"Meditation"},"megaColors":{"meditation":"#b48aff"},"importanceDefaults":{"meditation":4},"esotericDefaults":{"meditation":1},"importanceMap":{"sitting-meditation":5},"esotericMap":{"sitting-meditation":1},"difficultyOverrides":{"breath-awareness":"beg","counted-breath":"beg","body-settling":"beg"},"subFiltersByMega":{},"bodyLabels":{"hips":"Hips","spine":"Spine","shoulders":"Shoulders","hands":"Hands","head":"Head/Neck","gaze":"Eyes","jaw":"Jaw","breath":"Breathing"},"equipLabels":{"seat":"Seat","surface":"Surface","clothing":"Clothing","timer":"Timer"},"positionDefaults":{"sitting-meditation":{"body":{"hips":"A little higher than the knees — sit on the front edge of a cushion or chair","spine":"Upright and stacked, following its natural curves. Tall, not braced","shoulders":"Let them drop. Nothing held","hands":"Resting in the lap or on the thighs, wherever they are forgotten soonest","head":"Balanced over the shoulders, chin very slightly down","gaze":"Eyes closed, or open and soft on a spot a metre or two ahead","jaw":"Unclenched, teeth apart, tongue loose","breath":"Ordinary. You are watching it, not running it"},"equipment":{"seat":"Chair, cushion, folded blanket or bench — whatever lets you sit upright without strain","surface":"Stable and level; feet flat on the floor if you're on a chair","clothing":"Loose enough at the waist to breathe freely","timer":"Use the app's timer so you never have to check the clock"}}},"exercises":[{"id":"sitting-meditation","title":"Sitting Meditation","tag":"Meditation • Foundation","mega":"meditation","sub":"seated","icon":"meditation","keywords":"sitting meditation mindfulness breath attention focus beginner basic starter","quickCue":"Sit still, let the breath stay ordinary, and begin again every time you notice you have drifted. The returning is the practice.","general":{"setup":["Pick a seat — chair, cushion or bench — that lets your hips sit a little above your knees","Choose somewhere you won't be interrupted for the length of the sit","Silence your phone; the timer will tell you when you're done","Decide the length before you start, and don't renegotiate it once you're sitting"],"movement":["Sit down and let the body arrive for a few breaths before doing anything","Set the posture: upright but not stiff, hands resting, shoulders dropped","Close the eyes, or lower them to a soft point a metre or two ahead","Take three slower breaths to mark the beginning","Let the breath go back to its own rhythm — you are watching it, not steering it","Put your attention on one place where the breath is obvious: the nostrils, the chest, or the belly","Stay with one breath at a time. Not the last one, not the next one","Sooner or later you'll notice you've been thinking about something else. That noticing is the practice working","Note briefly where the mind went, without grading it, and bring attention back to the same place","Repeat that returning for the rest of the time, as many times as it takes — ten or a hundred, it makes no difference","When the bell sounds, take one deliberate breath before you move, then open your eyes slowly"],"mistakes":["Trying to stop thinking — noticing thoughts is the practice, not a failure at it","Forcing the breath into a pattern. Let it be as boring as it wants","Sitting rigid. Upright, not braced — tension in the shoulders and jaw is the usual giveaway","Grading the sit good or bad afterwards. The only thing that counts is that you sat","Starting at forty-five minutes. Five or ten daily beats an hour once a fortnight","Checking how long is left. That's what the timer is for"]},"variations":[{"id":"breath-awareness","title":"Breath Awareness","best":"Start Here","cue":"One place, one breath, begin again. The whole instruction fits in a sentence.","setup":["Settle into the posture and take three slower breaths","Pick your spot — nostrils, chest or belly — and keep it for the whole sit"],"movement":["Rest attention on the chosen spot","Feel the beginning, middle and end of one in-breath","Feel the small pause, then the out-breath, all the way to its end","Do that again with the next breath","When you find you've drifted, note it and come back to the same spot","Keep going until the bell"],"mistakes":["Moving the spot around mid-sit, looking for a better one","Deepening the breath so it's easier to feel — that's a different practice","Adding effort each time you drift. Come back lightly"],"programming":{"Time":"10 min","Frequency":"Daily","Posture":"Seated","Eyes":"Closed or soft"},"tip":"If the breath is hard to feel, rest a hand on the belly for the first minute and follow the hand instead."},{"id":"counted-breath","title":"Counted Breaths","best":"Busy Mind","cue":"Count out-breaths one to ten, then start at one again. Lost count? Start at one again.","setup":["Settle into the posture and take three slower breaths","Decide that the count goes on the out-breath"],"movement":["Breathe in normally, and on the out-breath count 'one' silently","Next out-breath, 'two' — and so on up to ten","At ten, drop back to one and go again","If you notice the count has run past ten, or you can't remember the number, start again at one","Starting again is not a penalty; it's the whole exercise","Continue until the bell"],"mistakes":["Counting so deliberately that the counting becomes louder than the breathing","Treating a lost count as evidence you're bad at this","Speeding the breath up to reach ten"],"programming":{"Time":"10 min","Frequency":"Daily","Posture":"Seated","Count":"1–10, repeating"},"tip":"A busy or sleepy mind holds a count better than it holds bare attention. Use this one on hard days."},{"id":"body-settling","title":"Body Settling","best":"Before You Sit","cue":"Two or three minutes of feeling where the body meets the seat, to arrive before you start.","setup":["Sit down without arranging yourself yet","Let the breath do whatever it is already doing"],"movement":["Feel the contact between your feet and the floor","Feel where your seat meets the chair or cushion, and how the weight sits on it","Feel the hands where they rest, and their temperature","Notice the whole shape of the body sitting there, all at once","Let anything that is obviously held — shoulders, jaw, forehead — go slack","Take one longer out-breath, and go on into the sit"],"mistakes":["Turning it into a search for tension to fix","Spending the whole session here — two or three minutes is the point"],"programming":{"Time":"3 min","Frequency":"Before any sit","Posture":"Seated"},"tip":"Use this as the first step of a longer session rather than a practice on its own."}]}],"seedPlans":[{"id":"seed-first-sit","name":"First Sit","desc":"Five minutes to find out what sitting is actually like.","steps":[{"exId":"sitting-meditation","varId":"body-settling","min":2},{"exId":"sitting-meditation","varId":"breath-awareness","min":3}]},{"id":"seed-daily-ten","name":"Daily Ten","desc":"A ten-minute sit you can repeat every morning.","steps":[{"exId":"sitting-meditation","varId":"body-settling","min":2},{"exId":"sitting-meditation","varId":"breath-awareness","min":8}]},{"id":"seed-hard-day","name":"Hard Day","desc":"For when the mind won't stay put — counting gives it a handrail.","steps":[{"exId":"sitting-meditation","varId":"counted-breath","min":10}]}],"avatarClips":{},"avatarByEx":{"sitting-meditation":"seated"},"avatarDefaultsByMega":{"meditation":"seated"},"glossaryCategories":[{"id":"all","label":"All"},{"id":"method","label":"Method"},{"id":"breath","label":"Breath"},{"id":"mindful","label":"Attention"},{"id":"cues","label":"Posture"}],"glossary":[{"term":"Anchor","cat":"method","def":"The one thing you keep coming back to — usually the feeling of the breath at a chosen spot. Having a single anchor is what makes it possible to notice you've left it."},{"term":"Attention","cat":"mindful","def":"What you are aware of right now. It moves on its own constantly; meditation is not about pinning it down but about noticing where it has gone and returning it."},{"term":"Beginning again","cat":"method","aka":"starting over","def":"Returning attention to the anchor after it has wandered. The single most repeated action in the practice, and the one that actually trains anything."},{"term":"Breath awareness","cat":"breath","def":"Watching the breath without changing it. The distinction matters: as soon as you are lengthening or deepening, you are doing a breathing exercise instead."},{"term":"Contact points","cat":"cues","def":"The places where the body meets the floor, seat or itself. Easy sensations to find, which makes them a reliable way to settle before a sit."},{"term":"Mind-wandering","cat":"mindful","aka":"drifting","def":"Attention leaving the anchor for a thought, plan or memory, usually without you noticing at the time. Expected, frequent, and not a mistake."},{"term":"Noting","cat":"method","def":"Naming what pulled attention away — 'planning', 'sound', 'itch' — briefly and without comment, before returning. Keeps you from getting drawn into the content."},{"term":"Posture","cat":"cues","def":"Upright and stable enough to stay awake, relaxed enough to stay still. Chair, cushion or bench are equally valid; hips slightly above the knees is the usual advice."},{"term":"Session","cat":"method","def":"One continuous sit of a decided length. Deciding the length before you start, and not renegotiating it once you're sitting, is most of the discipline."},{"term":"Settling","cat":"method","def":"The first minutes of a sit, where the body arrives and the obvious tension drops. Skipping it usually means spending the whole session fidgeting."},{"term":"Soft gaze","cat":"cues","def":"Eyes open but unfocused, resting on a spot a metre or two ahead and slightly down. An alternative to closed eyes if you get drowsy."},{"term":"Sitting still","cat":"cues","def":"Not moving for the length of the sit, including small adjustments. Stillness is a decision, not a feeling — the urge to shift usually passes if you watch it instead of obeying it."}]};</script>
+<script src="content-pack.js" onerror="window.IH_PACK_MISSING=1"></script>
+<script>
+/* ==================================================================
+   CONTENT BINDINGS + render helpers (src/guide-helpers.js, generated
+   from the guide — code only, no content). Do not edit here.
+   ================================================================== */
+/* Content comes from window.IH_CONTENT. Every binding has an empty default, so the app
+   runs with a partial pack or with none at all — it owns no practice content of its own. */
+const IH_C = (typeof window !== 'undefined' && window.IH_CONTENT) || {};
+const icons = IH_C.icons || {};
+const importanceMap = IH_C.importanceMap || {};
+const importanceDefaults = IH_C.importanceDefaults || {};
+const difficultyOverrides = IH_C.difficultyOverrides || {};
+const esotericMap = IH_C.esotericMap || {};
+const esotericDefaults = IH_C.esotericDefaults || {};
+const bodyLabels = IH_C.bodyLabels || {};
+const equipLabels = IH_C.equipLabels || {};
+const positionDefaults = IH_C.positionDefaults || {};
+const exercises = IH_C.exercises || [];
+const subFiltersByMega = IH_C.subFiltersByMega || {};
+const glossary = IH_C.glossary || [];
+const glossaryCategories = IH_C.glossaryCategories || [{ id: 'all', label: 'All' }];
+const HAS_CONTENT = exercises.length > 0;
+
+/* Badge and body-position rendering. Pure presentation over whatever the content pack
+   supplies: no practice names, no taxonomy, no vocabulary of its own. A pack that rates
+   nothing still renders — every lookup has a neutral fallback. */
+
+/* ---------- importance (practice level, 1-5) ---------- */
+function getImportance(id, mega) {
+  const v = importanceMap[id];
+  if (v >= 1 && v <= 5) return v;
+  const d = importanceDefaults[mega];
+  return d >= 1 && d <= 5 ? d : 3;
+}
+function importanceBadge(id, mega) {
+  const score = getImportance(id, mega);
+  const labels = { 5: 'Essential', 4: 'Important', 3: 'Useful', 2: 'Optional', 1: 'Niche' };
+  const stars = '★'.repeat(score) + '☆'.repeat(5 - score);
+  return `<span class="importance t${score}" title="${labels[score]}"><span class="importance-stars">${stars}</span></span>`;
+}
+
+/* ---------- difficulty (variation level) ---------- */
+function getDifficulty(varId) {
+  const d = difficultyOverrides[varId];
+  return d === 'beg' || d === 'int' || d === 'adv' || d === 'exp' ? d : 'int';
+}
+function difficultyBadge(varId) {
+  const diff = getDifficulty(varId);
+  const labels = { beg: 'Beginner', int: 'Intermediate', adv: 'Advanced', exp: 'Expert' };
+  return `<span class="difficulty ${diff}" title="${labels[diff]}">${labels[diff]}</span>`;
+}
+
+/* ---------- how far off the beaten track a practice is (1-5) ----------
+   1 = found in any class or app, 5 = deep in a specific tradition. Packs that don't
+   care can omit it entirely and everything reads as 1. */
+function getEsoteric(id, mega) {
+  const v = esotericMap[id];
+  if (v >= 1 && v <= 5) return v;
+  const d = esotericDefaults[mega];
+  return d >= 1 && d <= 5 ? d : 1;
+}
+function esotericBadge(id, mega) {
+  const score = getEsoteric(id, mega);
+  const labels = { 1: 'Mainstream', 2: 'Common', 3: 'Specialized', 4: 'Obscure', 5: 'Hermetic' };
+  const glyphs = { 1: '◯', 2: '◐', 3: '◉', 4: '❂', 5: '◈' };
+  return `<span class="esoteric e${score}" title="${labels[score]}"><span class="esoteric-glyph">${glyphs[score]}</span>${labels[score]}</span>`;
+}
+
+/* ---------- body position & props table ----------
+   A variation's own position overlays the family's defaults, field by field. */
+function getPosition(variation, parentId) {
+  const defaults = positionDefaults[parentId] || null;
+  if (!variation || !variation.position) return defaults;
+  if (!defaults) return variation.position;
+  return {
+    body: { ...(defaults.body || {}), ...(variation.position.body || {}) },
+    equipment: { ...(defaults.equipment || {}), ...(variation.position.equipment || {}) },
+  };
+}
+function renderPosition(uid, position) {
+  if (!position) return '';
+  const rows = (obj, labels) => Object.entries(obj || {}).map(([k, v]) =>
+    `<div class="position-row"><div class="pos-label">${labels[k] || k.charAt(0).toUpperCase() + k.slice(1)}</div><div class="pos-val">${v}</div></div>`);
+  const bodyRows = rows(position.body, bodyLabels);
+  const equipRows = rows(position.equipment, equipLabels);
+  if (!bodyRows.length && !equipRows.length) return '';
+  return `<div class="position-wrap" data-pid="${uid}">
+    <div class="position-toggle" tabindex="0" role="button" aria-expanded="false" onclick="togglePos('${uid}')"><span>📐 Body Position &amp; Props</span><span class="pos-chev">▶</span></div>
+    <div class="position-table">
+      ${bodyRows.length ? `<div class="position-section-title">Body</div>${bodyRows.join('')}` : ''}
+      ${equipRows.length ? `<div class="position-section-title">Props &amp; Equipment</div>${equipRows.join('')}` : ''}
+    </div>
+  </div>`;
+}
+function togglePos(pid) {
+  event.stopPropagation();
+  setExpanded(document.querySelector(`.position-wrap[data-pid="${pid}"]`), '.position-toggle');
+}
+
+</script>
+<script>
+/* ==================================================================
+   APP — InsightHunter logic (src/app.js)
+   ================================================================== */
+/* ==================================================================
+   AVATAR — an optional 3D figure that performs the practice while you
+   time it. No WebGL and no libraries: joints are 3D points, rotated and
+   perspective-projected into an SVG every frame.
+
+   The poses below are neutral body mechanics (anatomy, not tradition).
+   Which poses a given practice performs, and in what order, is CONTENT:
+   packs supply avatarClips / avatarByEx / avatarDefaultsByMega.
+   ================================================================== */
+
+// joint -> [x, y, z] in centimetres; y is up, z is forward, origin on the floor
+const AV_POSES = {
+  stand: {
+    head: [0, 160, 0], neck: [0, 145, 0], chest: [0, 125, 0], pelvis: [0, 92, 0],
+    shL: [-18, 142, 0], elL: [-20, 118, 0], haL: [-21, 95, 0],
+    shR: [18, 142, 0], elR: [20, 118, 0], haR: [21, 95, 0],
+    hiL: [-10, 90, 0], knL: [-10, 45, 1], ftL: [-10, 0, 2],
+    hiR: [10, 90, 0], knR: [10, 45, 1], ftR: [10, 0, 2],
+  },
+  reachUp: {
+    head: [0, 158, 4], neck: [0, 145, 2], chest: [0, 125, 0], pelvis: [0, 92, 0],
+    shL: [-18, 143, 0], elL: [-22, 163, 0], haL: [-15, 186, 0],
+    shR: [18, 143, 0], elR: [22, 163, 0], haR: [15, 186, 0],
+    hiL: [-10, 90, 0], knL: [-10, 45, 1], ftL: [-10, 0, 2],
+    hiR: [10, 90, 0], knR: [10, 45, 1], ftR: [10, 0, 2],
+  },
+  hinge: { // folded forward at the hips, arms hanging
+    head: [0, 84, 58], neck: [0, 92, 50], chest: [0, 101, 32], pelvis: [0, 90, 2],
+    shL: [-18, 98, 47], elL: [-19, 71, 45], haL: [-17, 46, 41],
+    shR: [18, 98, 47], elR: [19, 71, 45], haR: [17, 46, 41],
+    hiL: [-10, 89, 0], knL: [-10, 45, 3], ftL: [-10, 0, 2],
+    hiR: [10, 89, 0], knR: [10, 45, 3], ftR: [10, 0, 2],
+  },
+  pushupTop: { // straight line from heels to head, arms vertical
+    head: [0, 44, 66], neck: [0, 42, 54], chest: [0, 38, 40], pelvis: [0, 32, 2],
+    shL: [-18, 40, 52], elL: [-18, 20, 57], haL: [-18, 0, 60],
+    shR: [18, 40, 52], elR: [18, 20, 57], haR: [18, 0, 60],
+    hiL: [-10, 30, 0], knL: [-10, 19, -34], ftL: [-10, 8, -68],
+    hiR: [10, 30, 0], knR: [10, 19, -34], ftR: [10, 8, -68],
+  },
+  archBack: { // hips low, chest lifted, arms straight
+    head: [0, 73, 44], neck: [0, 63, 38], chest: [0, 50, 32], pelvis: [0, 18, 6],
+    shL: [-18, 55, 42], elL: [-18, 28, 44], haL: [-18, 0, 45],
+    shR: [18, 55, 42], elR: [18, 28, 44], haR: [18, 0, 45],
+    hiL: [-10, 15, 2], knL: [-10, 8, -40], ftL: [-10, 3, -74],
+    hiR: [10, 15, 2], knR: [10, 8, -40], ftR: [10, 3, -74],
+  },
+  pikeInverted: { // hips high, hands and feet on the floor
+    head: [0, 60, 30], neck: [0, 67, 22], chest: [0, 64, 26], pelvis: [0, 88, -6],
+    shL: [-18, 58, 34], elL: [-18, 29, 45], haL: [-18, 0, 55],
+    shR: [18, 58, 34], elR: [18, 29, 45], haR: [18, 0, 55],
+    hiL: [-10, 86, -8], knL: [-11, 47, -38], ftL: [-11, 3, -57],
+    hiR: [10, 86, -8], knR: [11, 47, -38], ftR: [11, 3, -57],
+  },
+  crossLegged: {
+    head: [0, 74, 0], neck: [0, 60, 0], chest: [0, 43, 0], pelvis: [0, 11, -3],
+    shL: [-17, 57, 0], elL: [-22, 38, 6], haL: [-15, 21, 15],
+    shR: [17, 57, 0], elR: [22, 38, 6], haR: [15, 21, 15],
+    hiL: [-10, 11, -4], knL: [-26, 7, 15], ftL: [7, 6, 17],
+    hiR: [10, 11, -4], knR: [26, 7, 15], ftR: [-7, 6, 19],
+  },
+  kneelSit: {
+    head: [0, 88, 0], neck: [0, 74, 0], chest: [0, 57, 0], pelvis: [0, 26, -6],
+    shL: [-17, 71, 0], elL: [-21, 51, 4], haL: [-16, 33, 12],
+    shR: [17, 71, 0], elR: [21, 51, 4], haR: [16, 33, 12],
+    hiL: [-10, 25, -6], knL: [-11, 8, 22], ftL: [-11, 5, -14],
+    hiR: [10, 25, -6], knR: [11, 8, 22], ftR: [11, 5, -14],
+  },
+  supine: { // lying on the back
+    head: [0, 7, -72], neck: [0, 7, -62], chest: [0, 8, -45], pelvis: [0, 9, -12],
+    shL: [-17, 8, -58], elL: [-24, 6, -38], haL: [-27, 5, -18],
+    shR: [17, 8, -58], elR: [24, 6, -38], haR: [27, 5, -18],
+    hiL: [-10, 9, -10], knL: [-11, 8, 25], ftL: [-11, 6, 60],
+    hiR: [10, 9, -10], knR: [11, 8, 25], ftR: [11, 6, 60],
+  },
+  tableTop: { // hands and knees
+    head: [0, 62, 52], neck: [0, 62, 42], chest: [0, 60, 30], pelvis: [0, 58, -12],
+    shL: [-17, 60, 34], elL: [-17, 30, 36], haL: [-17, 0, 38],
+    shR: [17, 60, 34], elR: [17, 30, 36], haR: [17, 0, 38],
+    hiL: [-10, 57, -14], knL: [-11, 28, -20], ftL: [-11, 4, -34],
+    hiR: [10, 57, -14], knR: [11, 28, -20], ftR: [11, 4, -34],
+  },
+};
+
+const AV_BONES = [
+  ['pelvis', 'chest', 7], ['chest', 'neck', 6], ['neck', 'head', 5],
+  ['shL', 'shR', 5], ['chest', 'shL', 5], ['chest', 'shR', 5],
+  ['shL', 'elL', 5], ['elL', 'haL', 4], ['shR', 'elR', 5], ['elR', 'haR', 4],
+  ['pelvis', 'hiL', 5], ['pelvis', 'hiR', 5],
+  ['hiL', 'knL', 6], ['knL', 'ftL', 5], ['hiR', 'knR', 6], ['knR', 'ftR', 5],
+];
+
+// generic motions the app ships with — no tradition attached
+const AV_CLIPS_BUILTIN = {
+  still: { breath: 1, period: 8, loop: [{ pose: 'stand', in: 1.2, hold: 7 }] },
+  seated: { breath: 1, period: 9, loop: [{ pose: 'crossLegged', in: 1.5, hold: 9 }] },
+  rest: { breath: 0.8, period: 11, loop: [{ pose: 'supine', in: 2, hold: 10 }] },
+};
+
+const AV_REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function avClips() { return Object.assign({}, AV_CLIPS_BUILTIN, IH_C.avatarClips || {}); }
+
+/* which motion a practice performs — the mapping lives in the content pack */
+function avClipFor(exId, varId) {
+  const all = avClips();
+  const byEx = IH_C.avatarByEx || {};
+  const name = (varId && byEx[exId + '/' + varId]) || byEx[exId]
+    || (IH_C.avatarDefaultsByMega || {})[(exFor(exId) || {}).mega];
+  const clip = all[name] || AV_CLIPS_BUILTIN.still;
+  return clip.loop && clip.loop.length ? clip : AV_CLIPS_BUILTIN.still;
+}
+
+/* pose at time t seconds into a looping clip, blended between keyframes */
+function avPoseAt(clip, t) {
+  const loop = clip.loop;
+  const total = loop.reduce((s, k) => s + (k.in || 0) + (k.hold || 0), 0) || 1;
+  if (AV_REDUCED) return AV_POSES[loop[0].pose] || AV_POSES.stand;
+  let u = ((t % total) + total) % total;
+  for (let i = 0; i < loop.length; i++) {
+    const k = loop[i];
+    const from = AV_POSES[loop[(i - 1 + loop.length) % loop.length].pose] || AV_POSES.stand;
+    const to = AV_POSES[k.pose] || AV_POSES.stand;
+    const tin = k.in || 0;
+    if (u < tin) {
+      const f = tin ? u / tin : 1;
+      const e = f * f * (3 - 2 * f); // smoothstep, so poses ease rather than snap
+      const out = {};
+      for (const j in to) {
+        const a = from[j] || to[j];
+        out[j] = [a[0] + (to[j][0] - a[0]) * e, a[1] + (to[j][1] - a[1]) * e, a[2] + (to[j][2] - a[2]) * e];
+      }
+      return out;
+    }
+    u -= tin + (k.hold || 0);
+    if (u < 0) return to;
+  }
+  return AV_POSES[loop[loop.length - 1].pose] || AV_POSES.stand;
+}
+
+/* Frame the camera on the whole clip, not one pose: a seated figure and a standing one
+   should each fill the box, and the framing must not jump between keyframes. Uses the
+   rotation-invariant radius so turning the figure never crops it. */
+function avClipBounds(clip) {
+  let r = 0, top = 0;
+  for (const k of clip.loop) {
+    const pose = AV_POSES[k.pose] || AV_POSES.stand;
+    for (const j in pose) {
+      const p = pose[j];
+      r = Math.max(r, Math.sqrt(p[0] * p[0] + p[2] * p[2]));
+      top = Math.max(top, p[1]);
+    }
+  }
+  const s = 0.78, halfW = r * s * 1.25 + 10, h = top * s * 1.15 + 12;
+  return { x: 100 - halfW, y: 186 - h, w: halfW * 2, h: h + 12 };
+}
+
+function avProject(p, yaw, pitch, s, cx, cy) {
+  const cyw = Math.cos(yaw), syw = Math.sin(yaw);
+  const x = p[0] * cyw + p[2] * syw;
+  const zr = -p[0] * syw + p[2] * cyw;
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const y = p[1] * cp - zr * sp;
+  const z = p[1] * sp + zr * cp;
+  const k = 420 / (420 + z); // perspective divide
+  return [cx + x * k * s, cy - y * k * s, z, k];
+}
+
+/* AV.mount(el, {exId, varId}) draws and animates until AV.stop() */
+const AV = {
+  // a 3/4 view from the side: forward motion (folds, planks) has to read as depth
+  raf: 0, host: null, els: null, yaw: 1.05, pitch: 0.12, clip: null, t0: 0,
+
+  mount(host, opts) {
+    this.stop();
+    this.host = host;
+    this.clip = opts.clip || avClipFor(opts.exId, opts.varId);
+    this.t0 = Date.now();
+    const vb = avClipBounds(this.clip);
+    // classes, not ids: an avatar can be mounted in the timer and the settings preview at once
+    host.innerHTML = `
+      <svg class="av-svg" viewBox="${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}" aria-hidden="true">
+        <ellipse class="av-shadow" cx="100" cy="182" rx="34" ry="7" fill="#000" opacity="0.35"/>
+        ${AV_BONES.map(() => '<line class="av-bone" stroke-linecap="round"/>').join('')}
+        <circle class="av-head" r="9"/>
+      </svg>
+      <div class="av-caption"></div>`;
+    this.els = {
+      svg: host.querySelector('.av-svg'),
+      shadow: host.querySelector('.av-shadow'),
+      head: host.querySelector('.av-head'),
+      caption: host.querySelector('.av-caption'),
+      bones: [...host.querySelectorAll('.av-bone')],
+    };
+    // drag to orbit
+    let dragX = null, yaw0 = 0;
+    const down = (e) => { dragX = (e.touches ? e.touches[0] : e).clientX; yaw0 = this.yaw; };
+    const move = (e) => {
+      if (dragX === null) return;
+      const x = (e.touches ? e.touches[0] : e).clientX;
+      this.yaw = yaw0 + (x - dragX) * 0.012;
+      if (e.cancelable) e.preventDefault();
+    };
+    const up = () => { dragX = null; };
+    this.els.svg.addEventListener('pointerdown', down);
+    this.els.svg.addEventListener('pointermove', move);
+    this.els.svg.addEventListener('pointerup', up);
+    this.els.svg.addEventListener('pointercancel', up);
+    this.draw(0);
+    if (!AV_REDUCED) this.loop();
+    return this;
+  },
+
+  loop() {
+    const step = () => {
+      if (!this.host || !this.host.isConnected) return this.stop();
+      this.draw((Date.now() - this.t0) / 1000);
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  },
+
+  draw(t) {
+    const clip = this.clip;
+    const pose = avPoseAt(clip, t);
+    // breath: chest and shoulders rise on the inhale, and drive the caption
+    const period = clip.period || 8;
+    const phase = AV_REDUCED ? 0 : Math.sin((t / period) * Math.PI * 2);
+    const amp = (clip.breath === undefined ? 1 : clip.breath) * 2.6;
+    const lifted = {};
+    for (const j in pose) {
+      const rise = (j === 'chest' || j === 'neck' || j === 'head' || j === 'shL' || j === 'shR') ? amp * phase : 0;
+      lifted[j] = [pose[j][0], pose[j][1] + rise, pose[j][2] + rise * 0.4];
+    }
+    const pts = {};
+    for (const j in lifted) pts[j] = avProject(lifted[j], this.yaw, this.pitch, 0.78, 100, 186);
+
+    AV_BONES.forEach((b, i) => {
+      const a = pts[b[0]], c = pts[b[1]];
+      const el = this.els.bones[i];
+      if (!a || !c) return;
+      el.setAttribute('x1', a[0].toFixed(1)); el.setAttribute('y1', a[1].toFixed(1));
+      el.setAttribute('x2', c[0].toFixed(1)); el.setAttribute('y2', c[1].toFixed(1));
+      const k = (a[3] + c[3]) / 2;
+      el.setAttribute('stroke-width', (b[2] * k).toFixed(2));
+      el.setAttribute('opacity', Math.max(0.45, Math.min(1, k)).toFixed(2)); // depth cue
+    });
+    const h = pts.head;
+    this.els.head.setAttribute('cx', h[0].toFixed(1));
+    this.els.head.setAttribute('cy', h[1].toFixed(1));
+    this.els.head.setAttribute('r', (9 * h[3]).toFixed(1));
+    // ground contact: screen y grows downwards, so the lowest point is the largest y
+    let low = 0, sumX = 0, n = 0;
+    for (const j in pts) { low = Math.max(low, pts[j][1]); sumX += pts[j][0]; n++; }
+    this.els.shadow.setAttribute('cy', (low + 2).toFixed(1));
+    this.els.shadow.setAttribute('cx', (sumX / n).toFixed(1));
+    this.els.shadow.setAttribute('rx', (18 + 16 * Math.abs(Math.sin(this.yaw))).toFixed(1));
+    if (this.els.caption) {
+      this.els.caption.textContent = AV_REDUCED || clip.breath === 0 ? ''
+        : (Math.cos((t / period) * Math.PI * 2) > 0 ? 'Inhale' : 'Exhale');
+    }
+  },
+
+  stop() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = 0;
+    this.host = null;
+    this.els = null;
+  },
+};
+
+/* ==================================================================
+   GOOGLE DRIVE BACKUP — the same OAuth setup Tachyread uses:
+   Google Identity Services token client, the private appDataFolder
+   scope, one shared public client id gated to the authorized origin,
+   and a bring-your-own-client-id escape hatch for forks.
+
+   Nothing in here runs, and Google's script is never fetched, until
+   you connect. The access token lives in memory only — never in
+   localStorage, never in an export.
+   ================================================================== */
+
+const DRIVE_FILE_NAME = 'insight-hunter-backup.json';
+// Public OAuth client id, shared with the sibling apps — an identifier, not a secret. It only
+// works from the JavaScript origins registered with Google; the origin gate below ALSO refuses
+// it app-side anywhere else, so a fork deployed elsewhere must supply its own id.
+const BUILTIN_DRIVE_CLIENT_ID = '547617739897-br6dj2facmsc34qnkjb5u4dbfhju39pu.apps.googleusercontent.com';
+const OAUTH_ORIGINS = ['https://adervec.github.io'];
+// The private app-data folder for the backup, plus the standard identity scopes so the settings
+// card can show which account is signed in. drive.appdata sees only this app's own folder.
+const DRIVE_SCOPE = 'openid email profile https://www.googleapis.com/auth/drive.appdata';
+
+function driveOriginAllowed() {
+  try {
+    const h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '[::1]') return true; // local dev, any port
+    return OAUTH_ORIGINS.indexOf(location.origin) !== -1;
+  } catch (e) { return false; }
+}
+// A user-supplied id (fork / self-host) wins; otherwise the built-in id on the authorized
+// origin. Empty means Drive backup simply isn't offered here.
+function driveClientId() {
+  const own = ((state.sync && state.sync.driveClientId) || '').trim();
+  return own || (driveOriginAllowed() ? BUILTIN_DRIVE_CLIENT_ID : '');
+}
+
+let _gis = null;
+function loadGis() {
+  if (_gis) return _gis;
+  _gis = new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Could not load Google sign-in.'));
+    document.head.appendChild(s);
+  });
+  return _gis;
+}
+
+let _driveToken = null;   // { value, exp } — memory only, so a shared device keeps no grant
+let _driveProfile = null; // { name, email, picture } — cosmetic, for the settings card
+function driveTokenValid() { return !!_driveToken && _driveToken.exp > Date.now() + 60000; }
+function getDriveProfile() { return _driveProfile; }
+
+async function fetchDriveProfile(token) {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
+    if (r.ok) {
+      const j = await r.json();
+      _driveProfile = { name: j.name || j.email || 'Google account', picture: j.picture || '', email: j.email || '' };
+    }
+  } catch (e) { /* cosmetic only — never blocks a backup */ }
+  return _driveProfile;
+}
+
+function requestDriveToken(clientId, prompt) {
+  return new Promise((resolve, reject) => {
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: DRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp && resp.access_token) {
+          _driveToken = { value: resp.access_token, exp: Date.now() + ((resp.expires_in || 3600) * 1000) };
+          resolve(resp.access_token);
+        } else reject(new Error((resp && resp.error) || 'Sign-in failed.'));
+      },
+      // Fires when the flow cannot produce a response at all (popup closed or blocked, network) —
+      // without it the promise would hang forever on a dismissed popup.
+      error_callback: (err) => reject(new Error((err && (err.message || err.type)) || 'Sign-in was dismissed.')),
+    });
+    // prompt '' → silent when a prior grant and an active Google session exist (boot / auto-backup);
+    // 'consent' forces the account chooser and must come from a click.
+    client.requestAccessToken({ prompt: prompt });
+  });
+}
+
+/* silent: only reuse an existing grant — never open a sign-in popup */
+async function driveConnect(opts) {
+  const silent = !!(opts && opts.silent);
+  const clientId = driveClientId();
+  if (!clientId) throw new Error('Drive backup isn’t enabled here.');
+  if (driveTokenValid()) {
+    if (!_driveProfile) await fetchDriveProfile(_driveToken.value);
+    return _driveToken.value;
+  }
+  await loadGis();
+  let token;
+  try {
+    token = await requestDriveToken(clientId, '');          // existing grant, no popup
+  } catch (e) {
+    if (silent) throw e;                                    // auto/boot: stay quiet
+    token = await requestDriveToken(clientId, 'consent');   // user asked for it: ask once
+  }
+  await fetchDriveProfile(token);
+  return token;
+}
+function driveDisconnect() { _driveToken = null; _driveProfile = null; }
+
+async function driveFind(token) {
+  const q = encodeURIComponent("name='" + DRIVE_FILE_NAME + "' and trashed=false");
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=' + q + '&fields=files(id,name,modifiedTime)',
+    { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) throw new Error('Drive list failed (' + r.status + ').');
+  const j = await r.json();
+  return (j.files && j.files[0]) || null;
+}
+// ponytail: one multipart request. A practice log is tens of KB, so Drive's 5 MB multipart cap
+// never bites — add the resumable protocol only if a backup ever approaches it.
+async function driveUpload(token, text) {
+  const existing = await driveFind(token);
+  const meta = existing ? {} : { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+  form.append('file', new Blob([text], { type: 'application/json' }));
+  const url = existing
+    ? 'https://www.googleapis.com/upload/drive/v3/files/' + existing.id + '?uploadType=multipart'
+    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+  const r = await fetch(url, { method: existing ? 'PATCH' : 'POST', headers: { Authorization: 'Bearer ' + token }, body: form });
+  if (!r.ok) throw new Error('Drive upload failed (' + r.status + ').');
+}
+async function driveDownload(token) {
+  const f = await driveFind(token);
+  if (!f) return null;
+  const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) throw new Error('Drive download failed (' + r.status + ').');
+  return await r.text();
+}
+
+function driveErr(e) {
+  const m = (e && e.message) || '';
+  return /^[\x20-\x7e’]{1,90}$/.test(m) ? m : 'Drive request failed.';
+}
+
+/* ---------- the two things the app actually does with Drive ---------- */
+async function driveBackupNow(opts) {
+  const silent = !!(opts && opts.silent);
+  try {
+    const token = await driveConnect({ silent: silent });
+    await driveUpload(token, backupPayload());
+    state.sync.lastSync = Date.now();
+    state.lastExportAt = Date.now(); // a Drive copy counts as a backup for the nudge
+    state.backupNudgedAt = 0;
+    saveState();
+    if (!silent) { toast('Backed up to Drive'); renderSettings(); }
+    return true;
+  } catch (e) {
+    if (!silent) { toast(driveErr(e)); renderSettings(); }
+    return false;
+  }
+}
+/* ---------- settings card ---------- */
+function driveSettingsHtml() {
+  const cid = driveClientId();
+  const prof = getDriveProfile();
+  const last = state.sync.lastSync;
+  return `
+    <div class="card">
+      <h2>☁️ Cloud backup <span class="muted">— private Google Drive app folder</span></h2>
+      ${cid ? `
+        <div class="set-row">
+          ${prof && prof.picture ? `<img class="drive-pic" src="${esc(prof.picture)}" alt="" referrerpolicy="no-referrer">` : ''}
+          <div class="sl">${prof ? 'Signed in as <strong>' + esc(prof.name) + '</strong>' : 'Not connected'}
+            <br><span class="d">${last ? 'Last Drive backup ' + dateLabel(todayStr(new Date(last))) + ', ' + new Date(last).toLocaleTimeString() : 'No Drive backup yet.'}</span></div>
+        </div>
+        <div class="set-row">
+          <div class="sl">Back up when a session ends<br><span class="d">Silent — it never opens a sign-in popup by itself</span></div>
+          <label class="switch"><input type="checkbox" id="set-drive-auto" ${state.sync.auto ? 'checked' : ''}><span class="sl-track"></span></label>
+        </div>
+        <div class="btn-row">
+          <button class="btn accent" id="drive-backup">⬆ Back up now</button>
+          <button class="btn" id="drive-restore">⬇ Restore from Drive</button>
+          ${prof ? '<button class="btn" id="drive-signout">Sign out</button>' : ''}
+        </div>
+      ` : `
+        <div class="muted">Drive backup isn’t enabled on this deployment. In the Google Cloud console create an
+          <strong>OAuth client ID → Web application</strong>, add this page’s origin (<code>${esc(location.origin)}</code>)
+          to its authorized JavaScript origins, enable the Drive API, then paste the client ID here — it stays on this device.</div>
+        <div class="field-label">Google OAuth client ID</div>
+        <input class="text-input" id="drive-cid" placeholder="xxxxx.apps.googleusercontent.com" value="${esc(state.sync.driveClientId || '')}">
+      `}
+      <div class="muted" style="margin-top:8px">Only this app can see the folder it writes to, and your browser talks to
+        Drive directly — nothing passes through any server of this app. Google’s sign-in script loads only when you connect,
+        and the access token is kept in memory, never saved.</div>
+    </div>`;
+}
+function bindDriveSettings() {
+  const cidInput = $('drive-cid');
+  if (cidInput) {
+    cidInput.addEventListener('change', () => {
+      state.sync.driveClientId = cidInput.value.trim().slice(0, 200);
+      saveState();
+      renderSettings();
+    });
+    return;
+  }
+  $('drive-backup').addEventListener('click', () => driveBackupNow({}));
+  $('drive-restore').addEventListener('click', driveRestore);
+  $('set-drive-auto').addEventListener('change', (e) => { state.sync.auto = e.target.checked; saveState(); });
+  const out = $('drive-signout');
+  if (out) out.addEventListener('click', () => { driveDisconnect(); toast('Signed out of Drive'); renderSettings(); });
+}
+
+async function driveRestore() {
+  try {
+    const token = await driveConnect({});
+    const text = await driveDownload(token);
+    if (text === null) { toast('No backup in Drive yet'); return; }
+    let obj = null;
+    try { obj = JSON.parse(text); } catch (e) { toast('The Drive backup could not be read'); return; }
+    await applyBackup(obj, 'Restore from Drive');
+    renderSettings();
+  } catch (e) { toast(driveErr(e)); }
+}
+
+'use strict';
+/* InsightHunter — a GymTracker315-style tracker for meditation, yoga & mind-body practice.
+   Single file, offline-first, localStorage. Content library baked in from the
+   Flexibility & Mind-Body Reference guide. */
+
+const APP_BUILD = 'build 1 · 2026-07-18';
+const STORAGE_KEY = 'insight_hunter_v1';
+const PENDING_KEY = 'insight_hunter_pending_v1';
+const TAB_KEY = 'ih_tab';
+
+/* ---------- tiny helpers ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const todayStr = (d) => {
+  const x = d || new Date();
+  return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+};
+const fmtMin = (m) => (m >= 60 ? Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '') : m + 'm');
+const fmtClock = (sec) => {
+  sec = Math.max(0, Math.round(sec));
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return (m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+};
+function dateLabel(ds) {
+  if (ds === todayStr()) return 'Today';
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (ds === todayStr(y)) return 'Yesterday';
+  const d = new Date(ds + 'T12:00:00');
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+/* ---------- content index ---------- */
+const EX_BY_ID = {};
+exercises.forEach((ex) => { EX_BY_ID[ex.id] = ex; });
+function getVar(exId, varId) {
+  const ex = EX_BY_ID[exId];
+  if (!ex || !varId || !ex.variations) return null;
+  return ex.variations.find((v) => v.id === varId) || null;
+}
+/* practices the user typed in themselves, so the app is usable with no content pack */
+const CUSTOM_PREFIX = 'custom:';
+function exFor(exId) {
+  if (EX_BY_ID[exId]) return EX_BY_ID[exId];
+  if (typeof exId === 'string' && exId.startsWith(CUSTOM_PREFIX)) {
+    return { id: exId, title: exId.slice(CUSTOM_PREFIX.length), tag: 'Custom', mega: 'custom', icon: 'meditation', variations: [], general: null, custom: true };
+  }
+  return null;
+}
+function displayName(exId, varId) {
+  const ex = exFor(exId);
+  if (!ex) return exId;
+  const v = getVar(exId, varId);
+  return v && v.title !== ex.title ? ex.title + ' — ' + v.title : ex.title;
+}
+const MEGA_LABELS = IH_C.megaLabels || {}; // category vocabulary belongs to the content pack
+const MEGA_COLORS = IH_C.megaColors || {};  // ...and so does its colour
+const ACCENT = '#b48aff';
+function megaColor(mega) { return MEGA_COLORS[mega] || ACCENT; }
+function megaVar(mega) { return `--mc:${megaColor(mega)}`; }
+// a pack may pick any colour, so work out whether text on top of it should be light
+function isDarkColor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 < 0.5;
+}
+function megaBadge(mega) {
+  return `<span class="mega-badge" style="${megaVar(mega)}">${esc(MEGA_LABELS[mega] || mega)}</span>`;
+}
+const NO_CONTENT_HTML = `<div class="no-results">
+  <strong>No content pack loaded.</strong><br><br>
+  InsightHunter ships as an empty practice tracker — the practice library and glossary
+  live in a separate <code>content-pack.js</code> file placed next to this app.<br><br>
+  You can still time, log, and chart your own sessions, and build plans from your own steps.
+</div>`;
+function suggestedMin(ex, v) {
+  const prog = (v && v.programming) || null;
+  const src = prog ? (prog.Time || prog.Duration || prog.Hold || '') : '';
+  const m = /(\d+)/.exec(src);
+  if (m) return Math.min(60, Math.max(1, parseInt(m[1], 10)));
+  return 10;
+}
+
+/* ---------- state ---------- */
+function defaultState() {
+  return {
+    sessions: [],       // {id, date, startedAt, endedAt, entries:[{id,exId,varId,min}], notes, planId, planName, updatedAt}
+    plans: [],          // {id, name, desc, steps:[{exId,varId,min}], seeded, updatedAt}
+    seededPlanIds: [],
+    favorites: {},
+    sound: { bell: true, volume: 0.5, intervalMin: 0, stepCue: false },
+    goal: { weeklyMin: 90 },
+    avatar: false,      // opt-in 3D figure in the timer
+    lastExportAt: 0,    // localStorage is the only copy until you export one
+    backupNudgedAt: 0,
+    // Google Drive backup. driveClientId is a fork's own OAuth client id (kept on this device);
+    // no token is ever stored here — see src/drive.js.
+    sync: { driveClientId: '', lastSync: 0, auto: false },
+
+    savedAt: 0,
+  };
+}
+let state = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const s = { ...defaultState(), ...JSON.parse(raw) };
+    s.sound = { ...defaultState().sound, ...(s.sound || {}) };
+    s.goal = { ...defaultState().goal, ...(s.goal || {}) };
+    s.sync = { ...defaultState().sync, ...(s.sync || {}) };
+    if (!Array.isArray(s.sessions)) s.sessions = [];
+    if (!Array.isArray(s.plans)) s.plans = [];
+    return s;
+  } catch (e) { return defaultState(); }
+}
+function saveState() {
+  state.savedAt = Date.now();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+let active = null; // in-progress session
+try { active = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); } catch (e) { active = null; }
+function savePending() {
+  if (active) localStorage.setItem(PENDING_KEY, JSON.stringify(active));
+  else localStorage.removeItem(PENDING_KEY);
+}
+
+/* ---------- audio bell ---------- */
+let _actx = null;
+function bell(times, soft) {
+  if (!state.sound.bell) return;
+  times = times || 1;
+  // soft = the short single tone used to mark a guided step change, not a session boundary
+  const partials = soft ? [880] : [528, 792, 1056];
+  const peaks = soft ? [0.22] : [0.5, 0.22, 0.08];
+  const decay = soft ? 0.7 : 2.4;
+  try {
+    _actx = _actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (_actx.state === 'suspended') _actx.resume();
+    for (let i = 0; i < times; i++) {
+      const t0 = _actx.currentTime + i * 1.1;
+      partials.forEach((f, j) => {
+        const o = _actx.createOscillator(), g = _actx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        const peak = state.sound.volume * peaks[j];
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + decay);
+        o.connect(g); g.connect(_actx.destination);
+        o.start(t0); o.stop(t0 + decay + 0.1);
+      });
+    }
+  } catch (e) { /* audio unavailable — stay silent */ }
+}
+
+/* ---------- toast & dialogs ---------- */
+let _toastT = null;
+function toast(msg, undo) {
+  const t = $('toast');
+  t.textContent = msg;
+  if (undo) {
+    const b = document.createElement('button');
+    b.className = 'toast-undo';
+    b.textContent = 'Undo';
+    b.addEventListener('click', () => { t.classList.remove('show'); clearTimeout(_toastT); undo(); });
+    t.appendChild(b);
+  }
+  t.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => t.classList.remove('show'), undo ? 6000 : 2200);
+}
+
+/* ---------- overlays: focus, Escape, and the phone's back button ----------
+   Every sheet goes through showOverlay, so all three behave the same way and a
+   sheet can never strand focus behind it. */
+let _restoreFocus = null;
+let _ovMarker = false;    // our history entry is on top of the stack
+let _releaseT = 0;        // deferred history.back() — see closeOverlay
+let _popping = false;     // inside popstate — don't navigate back again
+let _onClose = null;      // dismiss callback, so a sheet closed by Escape still settles its promise
+function showOverlay(html) {
+  const root = $('overlay-root');
+  if (!root.firstElementChild) {
+    _restoreFocus = document.activeElement;
+    _onClose = null;
+    clearTimeout(_releaseT); // a sheet that hands off to another keeps the same history entry
+    // back gesture / Android back closes the sheet instead of leaving the app
+    if (!_ovMarker) { try { history.pushState({ ihOverlay: 1 }, ''); _ovMarker = true; } catch (e) { _ovMarker = false; } }
+  }
+  root.innerHTML = html;
+  const ov = root.firstElementChild;
+  if (!ov) return;
+  const focusTarget = ov.querySelector('.sheet') || ov;
+  focusTarget.setAttribute('tabindex', '-1');
+  if (ov.classList.contains('overlay')) { ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); }
+  focusTarget.focus({ preventScroll: true });
+}
+function closeOverlay() {
+  $('overlay-root').innerHTML = '';
+  if (_restoreFocus && _restoreFocus.isConnected) { try { _restoreFocus.focus(); } catch (e) { /* gone */ } }
+  _restoreFocus = null;
+  const cb = _onClose; _onClose = null;
+  // release the history entry on the next tick, so picker -> log sheet -> timer hand-offs
+  // reuse it instead of stacking (and racing) one entry per sheet
+  if (_ovMarker && !_popping) {
+    clearTimeout(_releaseT);
+    _releaseT = setTimeout(() => {
+      if (_ovMarker && !$('overlay-root').firstElementChild) { _ovMarker = false; try { history.back(); } catch (e) { /* no history */ } }
+    }, 0);
+  }
+  if (cb) cb();
+}
+window.addEventListener('popstate', () => {
+  _ovMarker = false; // whatever we pushed is behind us now
+  if (!$('overlay-root').firstElementChild) return;
+  _popping = true;
+  if (T) cancelTimer(); else closeOverlay();
+  _popping = false;
+});
+// keep focus inside an open sheet — a modal you can tab out of is not modal
+document.addEventListener('focusin', (e) => {
+  const ov = $('overlay-root').firstElementChild;
+  if (!ov || ov.contains(e.target)) return;
+  const el = ov.querySelector('.sheet') || ov;
+  el.focus({ preventScroll: true });
+});
+document.addEventListener('keydown', (e) => {
+  const ov = $('overlay-root').firstElementChild;
+  // Escape dismisses a sheet — but never a running timer, which would drop the practice
+  if (e.key === 'Escape' && ov && ov.classList.contains('overlay')) { e.preventDefault(); closeOverlay(); return; }
+  // card-style controls are divs; make them behave like the buttons they claim to be
+  const t = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && t.tagName !== 'BUTTON' && t.getAttribute && t.getAttribute('role') === 'button') {
+    e.preventDefault(); t.click(); return;
+  }
+  if (e.key === '/' && !ov && !/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
+    e.preventDefault(); switchTab('library'); $('search').focus(); $('search').select();
+  }
+});
+
+function choiceDialog(opts) {
+  // themed replacement for native confirm/alert — returns the chosen button's value
+  return new Promise((resolve) => {
+    const btns = opts.buttons || [{ label: 'OK', value: true, kind: 'primary' }];
+    showOverlay(`
+      <div class="overlay center" id="dlg-ov">
+        <div class="sheet">
+          <div class="sheet-head"><div class="t">${esc(opts.title || '')}</div></div>
+          <div class="sheet-body">
+            ${opts.msg ? `<div class="dialog-msg">${esc(opts.msg)}</div>` : ''}
+            <div class="btn-row">${btns.map((b, i) => `<button class="btn ${b.kind || ''}" data-i="${i}" style="flex:1">${esc(b.label)}</button>`).join('')}</div>
+          </div>
+        </div>
+      </div>`);
+    _onClose = () => resolve(undefined); // Escape / back / backdrop all count as "no choice"
+    document.querySelectorAll('#dlg-ov [data-i]').forEach((el) => {
+      el.addEventListener('click', () => { _onClose = null; closeOverlay(); resolve(btns[+el.dataset.i].value); });
+    });
+    $('dlg-ov').addEventListener('click', (e) => { if (e.target.id === 'dlg-ov') closeOverlay(); });
+  });
+}
+
+/* ---------- day totals, streaks ---------- */
+function allSessions() { return active && active.entries.length ? state.sessions.concat([active]) : state.sessions; }
+function sortSessions() {
+  state.sessions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.startedAt || 0) - (b.startedAt || 0)));
+}
+function sessionMin(s) { return s.entries.reduce((t, e) => t + e.min, 0); }
+function dayTotals() {
+  const m = {};
+  allSessions().forEach((s) => { if (s.entries.length) m[s.date] = (m[s.date] || 0) + sessionMin(s); });
+  return m;
+}
+function streaks() {
+  const days = dayTotals();
+  const d = new Date();
+  let cur = 0;
+  if (!days[todayStr(d)]) d.setDate(d.getDate() - 1);
+  while (days[todayStr(d)]) { cur++; d.setDate(d.getDate() - 1); }
+  const dates = Object.keys(days).sort();
+  let best = 0, run = 0, prev = null;
+  dates.forEach((ds) => {
+    if (prev) {
+      const p = new Date(prev + 'T12:00:00'); p.setDate(p.getDate() + 1);
+      run = todayStr(p) === ds ? run + 1 : 1;
+    } else run = 1;
+    if (run > best) best = run;
+    prev = ds;
+  });
+  return { current: cur, best: best };
+}
+function renderStreakChip() {
+  const s = streaks();
+  const el = $('streak-chip');
+  el.textContent = '🔥 ' + s.current + ' day' + (s.current === 1 ? '' : 's');
+  el.className = s.current ? '' : 'zero';
+}
+
+/* ---------- tabs ---------- */
+let currentTab = localStorage.getItem(TAB_KEY) || 'practice';
+function switchTab(name) {
+  currentTab = name;
+  localStorage.setItem(TAB_KEY, name);
+  document.querySelectorAll('.tab').forEach((t) => {
+    const on = t.dataset.tab === name;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + name));
+  renderTab(name);
+}
+function renderTab(name) {
+  if (name === 'practice') renderPractice();
+  else if (name === 'plans') renderPlans();
+  else if (name === 'history') renderHistory();
+  else if (name === 'stats') renderStats();
+  else if (name === 'settings') renderSettings();
+}
+function renderAll() { renderStreakChip(); renderTab(currentTab); }
+
+/* ==================================================================
+   LIBRARY (ported from the guide, + favorites & practice actions)
+   ================================================================== */
+let currentMega = 'all';
+let currentSub = 'all';
+let currentSearch = '';
+const LIBVIEW_KEY = 'ih_libview';
+const LIBSORT_KEY = 'ih_libsort';
+let libView = localStorage.getItem(LIBVIEW_KEY) || 'list';
+let libSort = localStorage.getItem(LIBSORT_KEY) || 'default';
+function toggleLibView() {
+  libView = libView === 'grid' ? 'list' : 'grid';
+  localStorage.setItem(LIBVIEW_KEY, libView);
+  renderLibrary();
+}
+const LIB_SORTS = {
+  az: (a, b) => a.title.localeCompare(b.title),
+  importance: (a, b) => getImportance(b.id, b.mega) - getImportance(a.id, a.mega) || a.title.localeCompare(b.title),
+  esoteric: (a, b) => getEsoteric(a.id, a.mega) - getEsoteric(b.id, b.mega) || a.title.localeCompare(b.title),
+  short: (a, b) => suggestedMin(a, (a.variations || [])[0]) - suggestedMin(b, (b.variations || [])[0]),
+};
+function randomPractice() {
+  const pool = exercises.filter((ex) => (currentMega === 'all' || (currentMega === 'favorites' ? !!state.favorites[ex.id] : ex.mega === currentMega)));
+  if (!pool.length) { toast('Nothing to choose from in this filter'); return; }
+  openRecipe(pool[Math.floor(Math.random() * pool.length)].id);
+}
+
+function renderMegaFilter() {
+  // the category vocabulary comes from the content pack — no pack, no pills
+  const el = $('mega-filter');
+  const megas = Object.keys(MEGA_LABELS).filter((m) => exercises.some((ex) => ex.mega === m));
+  if (!megas.length) { el.innerHTML = ''; return; }
+  const PSEUDO = { all: '#888888', favorites: '#ffd24a' }; // not categories, so the app owns their colour
+  el.innerHTML = [['all', 'All'], ['favorites', '★ Favs']].concat(megas.map((m) => [m, MEGA_LABELS[m]]))
+    .map(([id, label]) => {
+      const c = PSEUDO[id] || megaColor(id);
+      return `<div class="mega-pill ${id === currentMega ? 'active' : ''} ${isDarkColor(c) ? 'on-dark' : ''}" style="--mc:${c}" data-mega="${id}" tabindex="0" role="button" aria-pressed="${id === currentMega}">${esc(label)}</div>`;
+    }).join('');
+  el.querySelectorAll('.mega-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      currentMega = pill.dataset.mega;
+      currentSub = 'all';
+      renderMegaFilter(); // re-render so class and aria-pressed can't drift apart
+      const again = el.querySelector(`.mega-pill[data-mega="${currentMega}"]`);
+      if (again) again.focus({ preventScroll: true });
+      renderSubFilters();
+      renderLibrary();
+    });
+  });
+}
+function renderSubFilters() {
+  const filterPills = $('filters');
+  const filters = subFiltersByMega[currentMega] || [];
+  if (filters.length === 0) { filterPills.style.display = 'none'; return; }
+  filterPills.style.display = 'flex';
+  filterPills.innerHTML = filters.map((f) => `<div class="pill ${f.id === currentSub ? 'active' : ''}" data-filter="${f.id}" tabindex="0" role="button" aria-pressed="${f.id === currentSub}">${f.label}</div>`).join('');
+  filterPills.querySelectorAll('.pill').forEach((p) => {
+    p.addEventListener('click', () => { currentSub = p.dataset.filter; renderSubFilters(); renderLibrary(); });
+  });
+}
+function exerciseMatchesSearch(ex, q) {
+  if (!q) return true;
+  if (ex.title.toLowerCase().includes(q)) return true;
+  if (ex.sanskrit && ex.sanskrit.toLowerCase().includes(q)) return true;
+  if (ex.keywords && ex.keywords.toLowerCase().includes(q)) return true;
+  if (ex.tag.toLowerCase().includes(q)) return true;
+  if (ex.quickCue && ex.quickCue.toLowerCase().includes(q)) return true;
+  if (ex.variations) {
+    for (const v of ex.variations) {
+      if (v.title.toLowerCase().includes(q)) return true;
+      if (v.sanskrit && v.sanskrit.toLowerCase().includes(q)) return true;
+      if (v.cue && v.cue.toLowerCase().includes(q)) return true;
+      if (v.best && v.best.toLowerCase().includes(q)) return true;
+    }
+  }
+  return false;
+}
+function renderLibrary() {
+  const main = $('exercises');
+  let filtered = exercises.filter((ex) => {
+    const matchesMega = currentMega === 'all' || (currentMega === 'favorites' ? !!state.favorites[ex.id] : ex.mega === currentMega);
+    const matchesSub = currentSub === 'all' || ex.sub === currentSub;
+    return matchesMega && matchesSub && exerciseMatchesSearch(ex, currentSearch);
+  });
+  if (LIB_SORTS[libSort]) filtered = filtered.slice().sort(LIB_SORTS[libSort]);
+  const totalVars = filtered.reduce((s, ex) => s + (ex.variations ? ex.variations.length : 0), 0);
+  $('results-count').textContent = `${filtered.length} practice${filtered.length === 1 ? '' : 's'} · ${totalVars} variation${totalVars === 1 ? '' : 's'}`;
+  $('view-toggle').textContent = libView === 'grid' ? '☰ List view' : '▦ Recipe grid';
+  if (!HAS_CONTENT) { main.innerHTML = NO_CONTENT_HTML; return; }
+  if (filtered.length === 0) { main.innerHTML = '<div class="no-results">No practices match your filters.</div>'; return; }
+
+  if (libView === 'grid') {
+    main.innerHTML = '<div class="recipe-grid">' + filtered.map((ex) => `
+      <div class="recipe-card" tabindex="0" role="button" onclick="openRecipe('${ex.id}')">
+        <div class="rc-icon">${icons[ex.icon] || icons.standing}</div>
+        <div class="rc-title">${state.favorites[ex.id] ? '<span class="fav-star">★</span> ' : ''}${ex.title}</div>
+        ${ex.sanskrit ? `<div class="rc-sanskrit">${ex.sanskrit}</div>` : ''}
+        <div class="rc-meta">${ex.tag} · ~${suggestedMin(ex, (ex.variations || [])[0])}m</div>
+        <div class="rc-badges">${importanceBadge(ex.id, ex.mega)}${megaBadge(ex.mega)}</div>
+      </div>`).join('') + '</div>';
+    return;
+  }
+
+  main.innerHTML = filtered.map((ex) => `
+    <div class="exercise" data-id="${ex.id}" data-mega="${ex.mega}" style="${megaVar(ex.mega)}">
+      <div class="exercise-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleEx('${ex.id}')">
+        <div class="ex-icon">${icons[ex.icon] || icons.standing}</div>
+        <div class="ex-info">
+          <div class="ex-title">${state.favorites[ex.id] ? '<span class="fav-star">★</span> ' : ''}${ex.title}</div>
+          ${ex.sanskrit ? `<div class="ex-sanskrit">${ex.sanskrit}</div>` : ''}
+          <div class="ex-tag">${ex.tag}</div>
+        </div>
+        <div class="chevron">▶</div>
+        <div class="badge-row">
+          ${importanceBadge(ex.id, ex.mega)}
+          ${esotericBadge(ex.id, ex.mega)}
+          ${megaBadge(ex.mega)}
+        </div>
+      </div>
+      <div class="exercise-body">
+        <div class="big-icon">${icons[ex.icon] || icons.standing}</div>
+        ${ex.quickCue ? `<div class="quick-cue">💡 ${ex.quickCue}</div>` : ''}
+        <div class="ex-actions">
+          <button class="btn accent small" onclick="openLogSheet('${ex.id}','timer')">⏱ Practice</button>
+          <button class="btn small" onclick="openLogSheet('${ex.id}','log')">➕ Log</button>
+          <button class="btn small" onclick="toggleFav('${ex.id}')">${state.favorites[ex.id] ? '★ Unfavorite' : '☆ Favorite'}</button>
+        </div>
+        ${ex.general ? `
+          <div class="section"><div class="section-title">General Setup</div><div class="section-content"><ul>${ex.general.setup.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>
+          <div class="section"><div class="section-title">General Practice</div><div class="section-content"><ul>${ex.general.movement.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>
+          <div class="section"><div class="section-title warn">Common Mistakes</div><div class="section-content"><ul>${ex.general.mistakes.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>
+        ` : ''}
+        ${ex.variations ? `
+          <div class="section">
+            <div class="section-title var">Variations (${ex.variations.length}) — Tap to expand</div>
+            <div class="variations-wrap">
+              ${ex.variations.map((v) => `
+                <div class="variation" data-vid="${ex.id}-${v.id}">
+                  <div class="variation-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleVar('${ex.id}-${v.id}')">
+                    <div class="var-title">${v.title}${v.sanskrit ? ` <span style="font-size:11px; color:#a090c0; font-style:italic; font-weight:400;">(${v.sanskrit})</span>` : ''}</div>
+                    <div class="var-chev">▶</div>
+                    <div class="var-badge-row">
+                      ${difficultyBadge(v.id, ex.id)}
+                      ${v.best ? `<div class="var-best">${v.best}</div>` : ''}
+                    </div>
+                  </div>
+                  <div class="variation-body">
+                    ${v.cue ? `<div class="var-cue">${v.cue}</div>` : ''}
+                    <div class="ex-actions"><button class="btn accent small" onclick="startTimerFor('${ex.id}','${v.id}')">⏱ Practice this</button></div>
+                    ${renderPosition(ex.id + '-' + v.id, getPosition(v, ex.id))}
+                    ${v.setup ? `<div class="var-section"><div class="var-section-title">Setup</div><div class="var-section-content"><ul>${v.setup.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>` : ''}
+                    ${v.movement ? `<div class="var-section"><div class="var-section-title">Practice</div><div class="var-section-content"><ul>${v.movement.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>` : ''}
+                    ${v.mistakes ? `<div class="var-section"><div class="var-section-title warn">Mistakes</div><div class="var-section-content"><ul>${v.mistakes.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>` : ''}
+                    ${v.programming ? `<div class="var-section"><div class="var-section-title">Practice Dose</div><div class="var-section-content"><div class="programming-grid">${Object.entries(v.programming).map(([k, val]) => `<div>${k}</div><div>${val}</div>`).join('')}</div></div></div>` : ''}
+                    ${v.tip ? `<div class="var-section"><div class="var-section-title" style="color:#5fd068">Tip</div><div class="var-section-content">${v.tip}</div></div>` : ''}
+                    ${v.warning ? `<div class="var-section"><div class="var-section-title" style="color:#e25555">⚠️ Caution</div><div class="var-section-content">${v.warning}</div></div>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+function toggleEx(id) { setExpanded(document.querySelector(`.exercise[data-id="${id}"]`), '.exercise-header'); }
+/* open/close a disclosure card, keeping its header's aria-expanded honest */
+function setExpanded(card, headSel) {
+  if (!card) return;
+  const open = card.classList.toggle('open');
+  const head = card.querySelector(headSel);
+  if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function toggleVar(vid) {
+  event.stopPropagation();
+  setExpanded(document.querySelector(`.variation[data-vid="${vid}"]`), '.variation-header');
+}
+function toggleFav(exId) {
+  event.stopPropagation();
+  if (state.favorites[exId]) delete state.favorites[exId];
+  else state.favorites[exId] = true;
+  saveState();
+  renderLibrary();
+}
+
+/* recipe view — one practice laid out like a recipe card: ingredients (setup),
+   method (the atomic steps), watch-outs (mistakes), dose (programming) */
+function openRecipe(exId) {
+  const ex = EX_BY_ID[exId];
+  if (!ex) return;
+  const vars = ex.variations || [];
+  const body = (varId) => {
+    const v = varId ? getVar(exId, varId) : null;
+    const setup = (v && v.setup) || (ex.general && ex.general.setup) || [];
+    const method = (v && v.movement) || (ex.general && ex.general.movement) || [];
+    const mistakes = (v && v.mistakes) || (ex.general && ex.general.mistakes) || [];
+    const cue = v ? v.cue : ex.quickCue;
+    return `
+      ${cue ? `<div class="quick-cue" style="margin-top:0">💡 ${cue}</div>` : ''}
+      <div class="recipe-glance">
+        ${v ? difficultyBadge(v.id, ex.id) : importanceBadge(ex.id, ex.mega)}
+        ${esotericBadge(ex.id, ex.mega)}
+        ${megaBadge(ex.mega)}
+        <span class="rc-meta">~${suggestedMin(ex, v)} min</span>
+      </div>
+      ${v ? renderPosition('rc-' + ex.id + '-' + v.id, getPosition(v, ex.id)) : ''}
+      ${setup.length ? `<div class="section"><div class="section-title">🧺 Ingredients — set up</div><div class="section-content"><ul>${setup.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>` : ''}
+      ${method.length ? `<div class="section"><div class="section-title">👣 Method — atomic steps</div><div class="section-content"><ol>${method.map((s) => `<li>${s}</li>`).join('')}</ol></div></div>` : ''}
+      ${mistakes.length ? `<div class="section"><div class="section-title warn">⚠️ Watch out</div><div class="section-content"><ul>${mistakes.map((s) => `<li>${s}</li>`).join('')}</ul></div></div>` : ''}
+      ${v && v.programming ? `<div class="section"><div class="section-title">⏲️ Dose</div><div class="section-content"><div class="programming-grid">${Object.entries(v.programming).map(([k, val]) => `<div>${k}</div><div>${val}</div>`).join('')}</div></div></div>` : ''}
+      ${v && v.tip ? `<div class="section"><div class="section-title" style="color:#5fd068">Tip</div><div class="section-content">${v.tip}</div></div>` : ''}
+      ${v && v.warning ? `<div class="section"><div class="section-title" style="color:#e25555">⚠️ Caution</div><div class="section-content">${v.warning}</div></div>` : ''}`;
+  };
+  showOverlay(`
+    <div class="overlay" id="rc-ov">
+      <div class="sheet" style="${megaVar(ex.mega)}">
+        <div class="sheet-head">
+          <div class="rc-icon" style="width:30px;height:30px;flex-shrink:0">${icons[ex.icon] || icons.standing}</div>
+          <div class="t">${ex.title}${ex.sanskrit ? ` <span style="font-size:11px;color:#a090c0;font-style:italic;font-weight:400">${ex.sanskrit}</span>` : ''}</div>
+          <button class="btn small" id="rc-close">✕</button>
+        </div>
+        <div class="sheet-body">
+          ${vars.length ? `
+            <div class="field-label">Variation</div>
+            <select class="var-select" id="rc-var" style="margin-top:0">
+              <option value="">${esc(ex.title)} (general)</option>
+              ${vars.map((v) => `<option value="${v.id}">${esc(v.title)}</option>`).join('')}
+            </select>` : ''}
+          ${exHistoryLine(exId)}
+          <div id="rc-body">${body(null)}</div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn accent" id="rc-practice" style="flex:1">⏱ Practice</button>
+            <button class="btn" id="rc-log" style="flex:1">➕ Log</button>
+            <button class="btn" id="rc-fav" style="flex:1">${state.favorites[exId] ? '★ Favorited' : '☆ Favorite'}</button>
+          </div>
+        </div>
+      </div>
+    </div>`);
+  let curVar = '';
+  const varSel = $('rc-var');
+  if (varSel) varSel.addEventListener('change', () => { curVar = varSel.value; $('rc-body').innerHTML = body(curVar || null); });
+  $('rc-close').addEventListener('click', closeOverlay);
+  $('rc-ov').addEventListener('click', (e) => { if (e.target.id === 'rc-ov') closeOverlay(); });
+  $('rc-practice').addEventListener('click', () => { if (curVar) startTimerFor(exId, curVar); else openLogSheet(exId, 'timer'); });
+  $('rc-log').addEventListener('click', () => openLogSheet(exId, 'log'));
+  $('rc-fav').addEventListener('click', () => {
+    if (state.favorites[exId]) delete state.favorites[exId];
+    else state.favorites[exId] = true;
+    saveState();
+    renderLibrary();
+    $('rc-fav').textContent = state.favorites[exId] ? '★ Favorited' : '☆ Favorite';
+  });
+}
+
+/* ==================================================================
+   SESSIONS
+   ================================================================== */
+function startSession() {
+  if (active) return;
+  active = { id: uid(), date: todayStr(), startedAt: Date.now(), endedAt: null, entries: [], notes: '', planId: null, planName: null, updatedAt: Date.now() };
+  savePending();
+}
+function logEntry(exId, varId, min, opts) {
+  if (!active) { startSession(); toast('Session started'); }
+  active.entries.push({ id: uid(), exId: exId, varId: varId || null, min: Math.max(1, Math.round(min)) });
+  active.updatedAt = Date.now();
+  savePending();
+  if (!opts || !opts.quiet) { renderAll(); toast('Logged ' + displayName(exId, varId)); }
+}
+/* Log a practice you did on an earlier day — it joins (or starts) that day's session
+   directly, without disturbing whatever is running now. */
+function logOn(exId, varId, min, date) {
+  if (!date || date === todayStr()) { logEntry(exId, varId, min); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('Pick a valid date'); return; }
+  if (date > todayStr()) { toast('You can’t log a practice in the future'); return; }
+  let s = null;
+  state.sessions.forEach((x) => { if (x.date === date && !x.planId) s = x; });
+  if (!s) {
+    s = { id: uid(), date: date, startedAt: new Date(date + 'T12:00:00').getTime(), endedAt: null, entries: [], notes: '', planId: null, planName: null, updatedAt: Date.now() };
+    state.sessions.push(s);
+  }
+  s.entries.push({ id: uid(), exId: exId, varId: varId || null, min: Math.max(1, Math.round(min)) });
+  s.updatedAt = Date.now();
+  sortSessions();
+  saveState();
+  renderAll();
+  toast('Logged ' + fmtMin(min) + ' to ' + dateLabel(date));
+}
+/* minutes are editable in place — mistyping a duration used to mean delete and re-add */
+function setEntryMin(sid, eid, val) {
+  const s = sid ? state.sessions.find((x) => x.id === sid) : active;
+  if (!s) return;
+  const e = s.entries.find((x) => x.id === eid);
+  if (!e) return;
+  const n = Math.max(1, Math.min(600, Math.round(+val || 0)));
+  if (n === e.min) return;
+  e.min = n;
+  s.updatedAt = Date.now();
+  if (sid) saveState(); else savePending();
+  renderAll();
+}
+/* your own track record with one practice, shown wherever you're about to pick it */
+function exHistory(exId) {
+  let n = 0, min = 0, last = null;
+  allSessions().forEach((s) => s.entries.forEach((e) => {
+    if (e.exId !== exId) return;
+    n++; min += e.min;
+    if (!last || s.date > last) last = s.date;
+  }));
+  return { n: n, min: min, last: last };
+}
+function exHistoryLine(exId) {
+  const h = exHistory(exId);
+  return `<button type="button" class="ex-hist" onclick="openExStats('${exId}')">${h.n
+    ? `📈 You’ve practiced this <strong>${h.n}×</strong> · ${fmtMin(h.min)} total · last ${dateLabel(h.last)} ›`
+    : '📈 You haven’t practiced this yet. ›'}</button>`;
+}
+const FEELS = [null, { i: '😖', l: 'Rough' }, { i: '😕', l: 'Restless' }, { i: '😐', l: 'Neutral' }, { i: '🙂', l: 'Settled' }, { i: '😌', l: 'Great' }];
+function setFeel(n) {
+  if (!active) return;
+  active.feel = active.feel === n ? null : n;
+  active.updatedAt = Date.now();
+  savePending();
+  renderPractice();
+}
+async function endSession() {
+  if (!active) return;
+  if (!active.entries.length) { discardSession(true); return; }
+  const total = sessionMin(active);
+  active.endedAt = Date.now();
+  active.updatedAt = Date.now();
+  state.sessions.push(active);
+  sortSessions();
+  const prior = state.sessions.filter((s) => s.date < active.date);
+  const last = prior.length ? prior[prior.length - 1] : null;
+  active = null;
+  savePending();
+  saveState();
+  renderAll();
+  bell(2);
+  if (state.sync.auto) driveBackupNow({ silent: true }); // never blocks the summary
+  const s = streaks();
+  let msg = 'Streak: ' + s.current + ' day' + (s.current === 1 ? '' : 's') + '.';
+  if (last) {
+    const lm = sessionMin(last);
+    msg += total >= lm ? '\nYou met your last session (' + fmtMin(lm) + ') — ' + (total > lm ? 'and beat it.' : 'matched.') : '\nLast session was ' + fmtMin(lm) + ' — there’s tomorrow.';
+  }
+  await choiceDialog({ title: '✨ Session complete — ' + fmtMin(total), msg: msg, buttons: [{ label: 'Done', value: true, kind: 'primary' }] });
+}
+async function discardSession(silent) {
+  if (!active) return;
+  if (!silent) {
+    const ok = await choiceDialog({ title: 'Discard session?', msg: 'The ' + active.entries.length + ' logged practice(s) will be lost.', buttons: [{ label: 'Discard', value: true, kind: 'danger' }, { label: 'Keep', value: false }] });
+    if (!ok) return;
+  }
+  active = null;
+  savePending();
+  renderAll();
+}
+function deleteEntry(entryId) {
+  if (!active) return;
+  const i = active.entries.findIndex((e) => e.id === entryId);
+  if (i < 0) return;
+  const gone = active.entries.splice(i, 1)[0];
+  active.updatedAt = Date.now();
+  savePending();
+  renderAll();
+  toast('Removed ' + displayName(gone.exId, gone.varId), () => {
+    if (!active) { toast('Session already ended — nothing to undo into'); return; }
+    active.entries.splice(i, 0, gone);
+    active.updatedAt = Date.now();
+    savePending();
+    renderAll();
+  });
+}
+
+/* ---------- practice panel ---------- */
+let _elapsedT = null;
+function recentExIds(n) {
+  const seen = [], have = {};
+  const sess = state.sessions.slice().reverse();
+  for (const s of sess) {
+    for (const e of s.entries.slice().reverse()) {
+      if (!have[e.exId]) { have[e.exId] = 1; seen.push(e.exId); if (seen.length >= n) return seen; }
+    }
+  }
+  return seen;
+}
+/* localStorage is the only copy of a practice log until you export one, and clearing
+   site data is a two-tap accident. Nag gently, and only once a week. */
+const DAY_MS = 86400000;
+function backupNudgeHtml() {
+  if (state.sessions.length < 5) return '';
+  if (state.backupNudgedAt && Date.now() - state.backupNudgedAt < 7 * DAY_MS) return '';
+  const days = state.lastExportAt ? Math.floor((Date.now() - state.lastExportAt) / DAY_MS) : null;
+  if (days !== null && days < 14) return '';
+  return `<div class="card nudge">
+    <h2>💾 Back up your practice log</h2>
+    <div class="sub">${days === null
+      ? state.sessions.length + ' sessions logged and no backup yet.'
+      : 'Your last backup was ' + days + ' days ago.'}
+      It lives in this browser only — clearing site data would erase it.</div>
+    <div class="btn-row">
+      <button class="btn accent" id="nudge-export">⬇ Export now</button>
+      ${driveClientId() ? '<button class="btn" id="nudge-drive">☁️ To Drive</button>' : ''}
+      <button class="btn" id="nudge-later">Later</button>
+    </div>
+  </div>`;
+}
+function bindBackupNudge() {
+  const ex = $('nudge-export');
+  if (!ex) return;
+  ex.addEventListener('click', () => { exportJson(); renderPractice(); });
+  const dr = $('nudge-drive');
+  if (dr) dr.addEventListener('click', async () => { if (await driveBackupNow({})) renderPractice(); });
+  $('nudge-later').addEventListener('click', () => { state.backupNudgedAt = Date.now(); saveState(); renderPractice(); });
+}
+function renderPractice() {
+  const p = $('panel-practice');
+  clearInterval(_elapsedT);
+  const days = dayTotals();
+  const todayMin = days[todayStr()] || 0;
+  const yd = new Date(); yd.setDate(yd.getDate() - 1);
+  const yMin = days[todayStr(yd)] || 0;
+  const wk = weekStart(new Date());
+  const weekMin = Object.keys(days).reduce((t, ds) => t + (weekStart(new Date(ds + 'T12:00:00')) === wk ? days[ds] : 0), 0);
+  const goalBar = `
+    <div class="goal-line"><span>This week</span><span class="g">${weekMin} / ${state.goal.weeklyMin} min</span></div>
+    <div class="mile-bar"><div class="f" style="width:${Math.min(100, Math.round(weekMin / Math.max(1, state.goal.weeklyMin) * 100))}%"></div></div>`;
+
+  if (!active) {
+    const quick = Object.keys(state.favorites).concat(recentExIds(8)).filter((v, i, a) => a.indexOf(v) === i && exFor(v)).slice(0, 8);
+    p.innerHTML = `
+      ${backupNudgeHtml()}
+      <div class="card">
+        <h2>🧘 Ready to practice</h2>
+        <div class="sub">${todayMin ? 'Today so far: <strong style="color:#b48aff">' + fmtMin(todayMin) + '</strong>' : (yMin ? 'Yesterday: ' + fmtMin(yMin) + ' — keep the thread going.' : 'Begin your first session.')}</div>
+        <div class="btn-row"><button class="btn accent big" id="begin-btn">Begin Practice</button></div>
+        ${goalBar}
+      </div>
+      ${quick.length ? `<div class="card"><h2>⚡ Quick start</h2><div class="quickstart-grid">${quick.map((id) => `<button class="btn small" onclick="openLogSheet('${esc(id)}','timer')">${state.favorites[id] ? '★ ' : ''}${esc(exFor(id).title)}</button>`).join('')}</div></div>` : ''}
+      <div class="card">
+        <h2>🗺️ Or run a plan</h2>
+        <div class="quickstart-grid">${state.plans.slice(0, 4).map((pl) => `<button class="btn small" onclick="startPlan('${pl.id}')">▶ ${esc(pl.name)}</button>`).join('') || '<span class="muted">No plans yet — see the Plans tab.</span>'}</div>
+      </div>`;
+    const bb = $('begin-btn');
+    if (bb) bb.addEventListener('click', () => { startSession(); renderAll(); });
+    bindBackupNudge();
+    return;
+  }
+
+  const total = sessionMin(active);
+  const beat = yMin ? (total >= yMin
+    ? `<div class="beat-chip ahead">✅ ${total > yMin ? 'Beat' : 'Matched'} yesterday (${fmtMin(yMin)})</div>`
+    : `<div class="beat-chip behind">🎯 ${fmtMin(yMin - total)} to match yesterday</div>`) : '';
+  p.innerHTML = `
+    <div class="card">
+      <div class="elapsed-strip"><span class="clock" id="sess-clock"></span><span class="muted">in session · ${fmtMin(total)} logged${active.planName ? ' · ' + esc(active.planName) : ''}</span></div>
+      ${beat}
+      <div class="btn-row">
+        <button class="btn accent" id="add-practice-btn">➕ Add Practice</button>
+        <button class="btn good" id="end-btn">✔ End Session</button>
+        <button class="btn danger" id="discard-btn">✕</button>
+      </div>
+      ${goalBar}
+    </div>
+    <div class="card">
+      <h2>Logged this session</h2>
+      ${active.entries.length ? active.entries.map((e) => `
+        <div class="entry-row">
+          <div class="e-icon">${icons[(exFor(e.exId) || {}).icon] || icons.meditation || ''}</div>
+          <div class="e-name">${esc(displayName(e.exId, e.varId))}</div>
+          <input class="e-min-edit" type="number" min="1" max="600" value="${e.min}" aria-label="Minutes — ${esc(displayName(e.exId, e.varId))}" onchange="setEntryMin('','${e.id}',this.value)">
+          <button class="entry-x" onclick="deleteEntry('${e.id}')" aria-label="Remove">✕</button>
+        </div>`).join('') : '<div class="muted">Nothing yet — add a practice or start a timer.</div>'}
+      <div class="field-label">How did it feel?</div>
+      <div class="feel-row">${[1, 2, 3, 4, 5].map((n) => `
+        <button type="button" class="feel ${active.feel === n ? 'on' : ''}" aria-pressed="${active.feel === n}" onclick="setFeel(${n})">${FEELS[n].i}<span class="fl">${FEELS[n].l}</span></button>`).join('')}</div>
+      <textarea class="session-note" id="sess-note" placeholder="Session notes — what did you notice?">${esc(active.notes || '')}</textarea>
+    </div>`;
+  $('add-practice-btn').addEventListener('click', () => openPicker());
+  $('end-btn').addEventListener('click', endSession);
+  $('discard-btn').addEventListener('click', () => discardSession(false));
+  $('sess-note').addEventListener('change', (e) => { active.notes = e.target.value; active.updatedAt = Date.now(); savePending(); });
+  const tick = () => { const el = $('sess-clock'); if (el && active) el.textContent = fmtClock((Date.now() - active.startedAt) / 1000); };
+  tick();
+  _elapsedT = setInterval(tick, 1000);
+}
+
+/* ==================================================================
+   PICKER & LOG SHEET
+   ================================================================== */
+function openPicker(onPick) {
+  onPick = onPick || ((exId) => openLogSheet(exId, 'ask'));
+  let q = '', mega = 'all';
+  const recent = recentExIds(20);
+  const draw = () => {
+    const list = exercises.filter((ex) => (mega === 'all' || ex.mega === mega) && exerciseMatchesSearch(ex, q));
+    // what you actually practise floats to the top: favorites, then recents, then the rest
+    const rank = (ex) => (state.favorites[ex.id] ? 0 : recent.indexOf(ex.id) >= 0 ? 1 : 2);
+    list.sort((a, b) => rank(a) - rank(b));
+    $('picker-list').innerHTML = list.map((ex) => `
+      <div class="picker-row" data-ex="${ex.id}" tabindex="0" role="button">
+        <div class="p-icon">${icons[ex.icon] || icons.standing}</div>
+        <div class="p-info"><div class="p-title">${state.favorites[ex.id] ? '★ ' : ''}${ex.title}</div><div class="p-sub">${ex.tag}</div></div>
+        ${esotericBadge(ex.id, ex.mega)}
+      </div>`).join('') || `<div class="no-results">${HAS_CONTENT ? 'No matches.' : 'No content pack loaded — type your own practice above.'}</div>`;
+    document.querySelectorAll('#picker-list .picker-row').forEach((r) => {
+      r.addEventListener('click', () => { closeOverlay(); onPick(r.dataset.ex); });
+    });
+  };
+  const pickCustom = () => {
+    // strip quotes/brackets: these names reach inline onclick handlers, so keep them inert
+    const name = ($('picker-q').value || '').replace(/["'`\\<>]/g, '').trim().slice(0, 60);
+    if (!name) return;
+    closeOverlay();
+    onPick(CUSTOM_PREFIX + name);
+  };
+  showOverlay(`
+    <div class="overlay" id="picker-ov">
+      <div class="sheet">
+        <div class="sheet-head"><div class="t">Choose a practice</div><button class="btn small" id="picker-close">✕</button></div>
+        <div class="sheet-body">
+          <div style="display:flex;gap:6px">
+            <input class="picker-search" id="picker-q" placeholder="${HAS_CONTENT ? 'Search or type your own...' : 'Name your practice...'}" autocomplete="off" style="flex:1">
+            <button class="btn small" id="picker-custom" title="Log what you typed as your own practice">➕ Own</button>
+          </div>
+          ${HAS_CONTENT ? `<div class="mega-filter" id="picker-megas">
+            ${['all'].concat(Object.keys(MEGA_LABELS)).map((m) => `<div class="mega-pill ${m === 'all' ? 'active' : ''} ${m !== 'all' && isDarkColor(megaColor(m)) ? 'on-dark' : ''}" style="--mc:${m === 'all' ? '#888888' : megaColor(m)}" data-mega="${m}" tabindex="0" role="button">${esc(m === 'all' ? 'All' : MEGA_LABELS[m])}</div>`).join('')}
+          </div>` : ''}
+          <div id="picker-list"></div>
+        </div>
+      </div>
+    </div>`);
+  $('picker-close').addEventListener('click', closeOverlay);
+  $('picker-ov').addEventListener('click', (e) => { if (e.target.id === 'picker-ov') closeOverlay(); });
+  $('picker-q').addEventListener('input', (e) => { q = e.target.value.trim().toLowerCase(); draw(); });
+  $('picker-q').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const first = document.querySelector('#picker-list .picker-row'); // Enter takes the top match, or your own words when nothing matches
+    if (first) { closeOverlay(); onPick(first.dataset.ex); } else pickCustom();
+  });
+  $('picker-custom').addEventListener('click', pickCustom);
+  document.querySelectorAll('#picker-megas .mega-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#picker-megas .mega-pill').forEach((x) => x.classList.remove('active'));
+      pill.classList.add('active');
+      mega = pill.dataset.mega;
+      draw();
+    });
+  });
+  draw();
+  $('picker-q').focus();
+}
+
+function openLogSheet(exId, mode) {
+  const ex = exFor(exId);
+  if (!ex) return;
+  let varId = null;
+  let mins = suggestedMin(ex, null);
+  const vars = ex.variations || [];
+  const drawMin = () => { $('ls-min').textContent = mins; };
+  showOverlay(`
+    <div class="overlay" id="ls-ov">
+      <div class="sheet">
+        <div class="sheet-head"><div class="t">${esc(ex.title)}</div><button class="btn small" id="ls-close">✕</button></div>
+        <div class="sheet-body">
+          ${ex.quickCue ? `<div class="quick-cue" style="margin-top:0">💡 ${ex.quickCue}</div>` : ''}
+          ${exHistoryLine(exId)}
+          ${vars.length ? `
+            <div class="field-label">Variation</div>
+            <select class="var-select" id="ls-var">
+              <option value="">${esc(ex.title)} (general)</option>
+              ${vars.map((v) => `<option value="${v.id}">${esc(v.title)}</option>`).join('')}
+            </select>` : ''}
+          <div class="field-label">Minutes</div>
+          <div class="preset-row">${[3, 5, 10, 15, 20, 30, 45, 60].map((n) => `<button class="btn small ls-preset" data-n="${n}">${n}</button>`).join('')}</div>
+          <div class="minute-stepper">
+            <button class="btn" id="ls-m5">−5</button><button class="btn" id="ls-m1">−1</button>
+            <div class="val"><span id="ls-min"></span><span style="font-size:14px;color:#887a9a">m</span></div>
+            <button class="btn" id="ls-p1">+1</button><button class="btn" id="ls-p5">+5</button>
+          </div>
+          <div class="field-label">When (for “Log it”)</div>
+          <div class="preset-row">
+            <button class="btn small ls-day" data-d="0">Today</button>
+            <button class="btn small ls-day" data-d="1">Yesterday</button>
+            <input class="mini" type="date" id="ls-date" value="${todayStr()}" max="${todayStr()}" aria-label="Date practised">
+          </div>
+        </div>
+        <div class="sheet-foot">
+          <button class="btn primary" id="ls-log">➕ Log it</button>
+          <button class="btn accent" id="ls-timer">⏱ Start Timer</button>
+        </div>
+      </div>
+    </div>`);
+  drawMin();
+  const setMin = (n) => { mins = Math.min(180, Math.max(1, n)); drawMin(); };
+  $('ls-close').addEventListener('click', closeOverlay);
+  $('ls-ov').addEventListener('click', (e) => { if (e.target.id === 'ls-ov') closeOverlay(); });
+  document.querySelectorAll('.ls-preset').forEach((b) => b.addEventListener('click', () => setMin(+b.dataset.n)));
+  $('ls-m5').addEventListener('click', () => setMin(mins - 5));
+  $('ls-m1').addEventListener('click', () => setMin(mins - 1));
+  $('ls-p1').addEventListener('click', () => setMin(mins + 1));
+  $('ls-p5').addEventListener('click', () => setMin(mins + 5));
+  const lsVar = $('ls-var');
+  if (lsVar) lsVar.addEventListener('change', () => {
+    varId = lsVar.value || null;
+    setMin(suggestedMin(ex, getVar(exId, varId)));
+  });
+  document.querySelectorAll('.ls-day').forEach((b) => b.addEventListener('click', () => {
+    const d = new Date();
+    d.setDate(d.getDate() - (+b.dataset.d));
+    $('ls-date').value = todayStr(d);
+  }));
+  $('ls-log').addEventListener('click', () => { const day = $('ls-date').value; closeOverlay(); logOn(exId, varId, mins, day); });
+  $('ls-timer').addEventListener('click', () => { closeOverlay(); startTimer({ exId: exId, varId: varId, min: mins }); });
+  if (mode === 'timer') { /* default focus on timer path — same sheet, user taps Start */ }
+}
+function startTimerFor(exId, varId) {
+  event.stopPropagation();
+  const ex = exFor(exId);
+  startTimer({ exId: exId, varId: varId, min: suggestedMin(ex, getVar(exId, varId)) });
+}
+
+/* ==================================================================
+   TIMER (single practice + plan runner share this overlay)
+   ================================================================== */
+let T = null; // {queue:[{exId,varId,min}], idx, endTs, remainMs, paused, planId, planName, logged:[], lastBellMin}
+let _timerT = null;
+let _wakeLock = null;
+async function grabWakeLock() {
+  try { _wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { _wakeLock = null; }
+}
+function releaseWakeLock() { try { if (_wakeLock) _wakeLock.release(); } catch (e) {} _wakeLock = null; }
+document.addEventListener('visibilitychange', () => { if (T && !T.paused && document.visibilityState === 'visible') grabWakeLock(); });
+
+function startTimer(opts) {
+  startPlanQueue([{ exId: opts.exId, varId: opts.varId || null, min: opts.min }], null, null);
+}
+function startPlanQueue(queue, planId, planName) {
+  T = { queue: queue, idx: 0, planId: planId, planName: planName, logged: [], paused: false };
+  beginStep();
+}
+function stepsFor(step) {
+  const ex = exFor(step.exId);
+  const v = getVar(step.exId, step.varId);
+  return (v && v.movement) || (ex && ex.general && ex.general.movement) || [];
+}
+function beginStep() {
+  const step = T.queue[T.idx];
+  T.stepStart = Date.now();
+  T.durMs = step.min * 60000;
+  T.endTs = Date.now() + T.durMs;
+  T.paused = false;
+  T.lastBellMin = 0;
+  bell(1);
+  runTimer();
+}
+// draw + tick + keep the screen on + persist; shared by a fresh step and a resumed one
+function runTimer() {
+  T.steps = stepsFor(T.queue[T.idx]);
+  T.cueIdx = -1;
+  drawTimer();
+  grabWakeLock();
+  saveTimer();
+  clearInterval(_timerT);
+  _timerT = setInterval(timerTick, 250);
+  timerTick();
+}
+/* Walk the atomic steps in time with the countdown: the practice's steps get an equal
+   slice of the duration each, so the timer teaches the technique instead of just ending it.
+   ponytail: even split — switch to per-step seconds if a content pack ever carries them. */
+function paintCue() {
+  const box = $('t-cue');
+  if (!box) return;
+  const list = T.steps || [];
+  const i = T.cueIdx;
+  if (!list.length || i < 0) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = `<span class="n">Step ${i + 1} of ${list.length}</span>${list[i]}`;
+  document.querySelectorAll('#t-steps li').forEach((li, k) => {
+    li.classList.toggle('cur', k === i);
+    li.classList.toggle('done', k < i);
+  });
+}
+function timerTick() {
+  if (!T || T.paused) return;
+  const left = T.endTs - Date.now();
+  const el = $('t-count');
+  if (el) el.textContent = fmtClock(left / 1000);
+  const ring = $('t-ring');
+  if (ring) {
+    const frac = Math.max(0, left / T.durMs);
+    ring.setAttribute('stroke-dashoffset', String(628 * (1 - frac)));
+  }
+  const n = (T.steps || []).length;
+  if (n) {
+    const i = Math.min(n - 1, Math.max(0, Math.floor(((T.durMs - left) / T.durMs) * n)));
+    if (i !== T.cueIdx) {
+      const advanced = i > T.cueIdx && T.cueIdx >= 0; // step 1 already got the start bell
+      T.cueIdx = i;
+      paintCue();
+      if (advanced && state.sound.stepCue) bell(1, true);
+    }
+  }
+  const iv = state.sound.intervalMin;
+  if (iv > 0) {
+    const elapsedMin = Math.floor((T.durMs - left) / 60000);
+    if (elapsedMin > T.lastBellMin && elapsedMin % iv === 0 && left > 1500) { T.lastBellMin = elapsedMin; bell(1); }
+  }
+  if (left <= 0) stepDone(true);
+}
+function stepDone(auto) {
+  const step = T.queue[T.idx];
+  const actualMs = T.paused ? (T.durMs - T.remainMs) : Math.min(T.durMs, Date.now() - T.stepStart);
+  const actualMin = Math.max(1, Math.round(actualMs / 60000));
+  T.logged.push({ exId: step.exId, varId: step.varId, min: auto ? step.min : actualMin });
+  if (T.idx < T.queue.length - 1) {
+    bell(2);
+    T.idx++;
+    beginStep();
+  } else {
+    finishTimer();
+  }
+}
+function skipStep() { // drop current step without logging it
+  if (T.idx < T.queue.length - 1) { T.idx++; beginStep(); }
+  else finishTimer();
+}
+/* A phone can discard a backgrounded tab mid-practice. Persist the running timer so a
+   reload offers to pick it up instead of silently losing the session. */
+const TIMER_KEY = 'ih_timer_v1';
+function saveTimer() {
+  if (!T) { localStorage.removeItem(TIMER_KEY); return; }
+  localStorage.setItem(TIMER_KEY, JSON.stringify({
+    queue: T.queue, idx: T.idx, planId: T.planId, planName: T.planName, logged: T.logged,
+    endTs: T.endTs, durMs: T.durMs, paused: T.paused, remainMs: T.remainMs, savedAt: Date.now(),
+  }));
+}
+async function resumeTimer() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null'); } catch (e) { s = null; }
+  localStorage.removeItem(TIMER_KEY);
+  if (!s || !Array.isArray(s.queue) || !s.queue.length || !s.queue[s.idx]) return;
+  const left = Math.max(0, s.paused ? (s.remainMs || 0) : s.endTs - Date.now());
+  const step = s.queue[s.idx];
+  const pick = await choiceDialog({
+    title: '⏱ Timer interrupted',
+    msg: displayName(step.exId, step.varId) + (left > 1000
+      ? ' — ' + fmtClock(left / 1000) + ' still to run.'
+      : ' — its time ran out while the app was closed.'),
+    buttons: [
+      { label: left > 1000 ? 'Resume' : 'Finish it', value: 'go', kind: 'primary' },
+      { label: 'Discard', value: 'no' },
+    ],
+  });
+  T = {
+    queue: s.queue, idx: s.idx, planId: s.planId, planName: s.planName, logged: s.logged || [],
+    paused: false, durMs: s.durMs, endTs: Date.now() + left, stepStart: Date.now() - (s.durMs - left), lastBellMin: 0,
+  };
+  if (pick === 'go') runTimer();
+  else cancelTimer(); // keeps whatever steps had already completed
+}
+function finishTimer() {
+  clearInterval(_timerT);
+  releaseWakeLock();
+  bell(T.planId ? 3 : 2);
+  const logged = T.logged, planId = T.planId, planName = T.planName;
+  T = null;
+  saveTimer();
+  closeOverlay();
+  if (logged.length) {
+    if (!active) { startSession(); }
+    if (planId && !active.planId) { active.planId = planId; active.planName = planName; }
+    logged.forEach((l) => logEntry(l.exId, l.varId, l.min, { quiet: true }));
+    renderAll();
+    toast('Logged ' + logged.length + ' practice' + (logged.length === 1 ? '' : 's') + ' · ' + fmtMin(logged.reduce((t, l) => t + l.min, 0)));
+  }
+}
+function cancelTimer() {
+  clearInterval(_timerT);
+  releaseWakeLock();
+  const logged = T ? T.logged : [];
+  const planId = T && T.planId, planName = T && T.planName;
+  T = null;
+  saveTimer();
+  closeOverlay();
+  // keep what was already completed in a plan run; the current step is abandoned
+  if (logged && logged.length) {
+    if (!active) startSession();
+    if (planId && !active.planId) { active.planId = planId; active.planName = planName; }
+    logged.forEach((l) => logEntry(l.exId, l.varId, l.min, { quiet: true }));
+    renderAll();
+  }
+}
+function pauseResume() {
+  if (!T) return;
+  if (T.paused) {
+    T.endTs = Date.now() + T.remainMs;
+    T.stepStart = Date.now() - (T.durMs - T.remainMs);
+    T.paused = false;
+    grabWakeLock();
+    $('t-pause').textContent = '⏸ Pause';
+  } else {
+    T.remainMs = Math.max(0, T.endTs - Date.now());
+    T.paused = true;
+    releaseWakeLock();
+    $('t-pause').textContent = '▶ Resume';
+  }
+  saveTimer();
+}
+function plusMinute() { if (T) { T.endTs += 60000; T.durMs += 60000; saveTimer(); } }
+function drawTimer() {
+  const step = T.queue[T.idx];
+  const ex = exFor(step.exId) || { title: step.exId, general: null };
+  const v = getVar(step.exId, step.varId);
+  const steps = T.steps || stepsFor(step);
+  const setup = (v && v.setup) || (ex.general && ex.general.setup) || [];
+  const next = T.queue[T.idx + 1];
+  showOverlay(`
+    <div class="timer-wrap" id="timer-ov">
+      ${T.planName || T.queue.length > 1 ? `<div class="timer-step-label">${esc(T.planName || 'Plan')}${T.queue.length > 1
+        ? ` · Step ${T.idx + 1}/${T.queue.length}${next ? ' · Next: ' + esc(displayName(next.exId, next.varId)) : ' · Final step'}` : ''}</div>` : ''}
+      <div class="timer-name">${esc(v ? v.title : ex.title)}</div>
+      ${(v && v.sanskrit) || ex.sanskrit ? `<div class="timer-sanskrit">${esc((v && v.sanskrit) || ex.sanskrit)}</div>` : ''}
+      ${state.avatar ? '<div class="avatar-box" id="av-box" title="Drag to turn"></div>' : ''}
+      <div class="timer-cue" id="t-cue" aria-live="polite"></div>
+      <div class="timer-ring-box">
+        <svg viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="100" fill="none" stroke="#1f1830" stroke-width="10"/>
+          <circle id="t-ring" cx="110" cy="110" r="100" fill="none" stroke="#b48aff" stroke-width="10" stroke-linecap="round" stroke-dasharray="628" stroke-dashoffset="0"/>
+        </svg>
+        <div class="t-time"><span id="t-count">${fmtClock(step.min * 60)}</span><span class="t-sub">${step.min} min</span></div>
+      </div>
+      <div class="timer-controls">
+        <button class="btn" id="t-pause">⏸ Pause</button>
+        <button class="btn" id="t-plus">+1 min</button>
+        <button class="btn good" id="t-done">✔ Done</button>
+        ${T.queue.length > 1 ? '<button class="btn" id="t-skip">⏭ Skip</button>' : ''}
+        <button class="btn danger" id="t-cancel">✕</button>
+      </div>
+      ${steps.length || setup.length ? `<div class="timer-steps">
+        ${setup.length ? `<div class="setup-line">Setup: ${setup.join(' · ')}</div>` : ''}
+        ${steps.length ? `<div class="ts-title">Atomic steps</div>
+        <ol id="t-steps">${steps.map((s) => `<li>${s}</li>`).join('')}</ol>` : ''}
+        ${v && v.cue ? `<div class="setup-line" style="margin-top:8px">💡 ${v.cue}</div>` : ''}
+      </div>` : ''}
+    </div>`);
+  $('t-pause').addEventListener('click', pauseResume);
+  $('t-plus').addEventListener('click', plusMinute);
+  $('t-done').addEventListener('click', () => stepDone(false));
+  $('t-cancel').addEventListener('click', cancelTimer);
+  const sk = $('t-skip');
+  if (sk) sk.addEventListener('click', skipStep);
+  paintCue();
+  if (state.avatar) AV.mount($('av-box'), { exId: step.exId, varId: step.varId });
+}
+
+/* ==================================================================
+   PLANS
+   ================================================================== */
+const SEED_PLANS = IH_C.seedPlans || []; // curated plans ship with the content pack
+function seedPlans() {
+  if (!HAS_CONTENT) return; // seeded plans reference library ids — nothing to point at
+  SEED_PLANS.forEach((sp) => {
+    if (state.seededPlanIds.includes(sp.id)) return;
+    state.seededPlanIds.push(sp.id);
+    state.plans.push({ ...sp, steps: sp.steps.map((s) => ({ ...s })), seeded: true, updatedAt: Date.now() });
+  });
+  saveState();
+}
+function planMin(pl) { return pl.steps.reduce((t, s) => t + s.min, 0); }
+function renderPlans() {
+  const p = $('panel-plans');
+  p.innerHTML = `
+    <div class="btn-row" style="margin:0 0 10px 0"><button class="btn accent" id="new-plan-btn">➕ New Plan</button></div>
+    ${state.plans.map((pl) => `
+      <div class="plan-card">
+        <div class="pt">${esc(pl.name)} <span class="muted">${fmtMin(planMin(pl))}</span></div>
+        ${pl.desc ? `<div class="pd">${esc(pl.desc)}</div>` : ''}
+        <div class="plan-steps-preview">${pl.steps.map((s) => esc(displayName(s.exId, s.varId)) + ' (' + s.min + 'm)').join(' → ')}</div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="btn accent small" onclick="startPlan('${pl.id}')">▶ Start</button>
+          <button class="btn small" onclick="editPlan('${pl.id}')">✎ Edit</button>
+          <button class="btn small" onclick="dupPlan('${pl.id}')">⧉ Copy</button>
+          <button class="btn danger small" onclick="delPlan('${pl.id}')">✕</button>
+        </div>
+      </div>`).join('') || '<div class="no-results">No plans. Create one, or re-seed from Settings.</div>'}`;
+  $('new-plan-btn').addEventListener('click', () => editPlan(null));
+}
+function startPlan(planId) {
+  const pl = state.plans.find((x) => x.id === planId);
+  if (!pl || !pl.steps.length) return;
+  startPlanQueue(pl.steps.map((s) => ({ ...s })), pl.id, pl.name);
+}
+function dupPlan(planId) {
+  const pl = state.plans.find((x) => x.id === planId);
+  if (!pl) return;
+  state.plans.push({ ...pl, id: uid(), name: pl.name + ' (copy)', steps: pl.steps.map((s) => ({ ...s })), seeded: false, updatedAt: Date.now() });
+  saveState();
+  renderPlans();
+}
+function delPlan(planId) {
+  const i = state.plans.findIndex((x) => x.id === planId);
+  if (i < 0) return;
+  const gone = state.plans.splice(i, 1)[0];
+  saveState();
+  renderPlans();
+  toast('Deleted “' + gone.name + '”', () => {
+    state.plans.splice(i, 0, gone);
+    saveState();
+    renderPlans();
+  });
+}
+function editPlan(planId, resumeDraft) {
+  const existing = planId ? state.plans.find((x) => x.id === planId) : null;
+  const draft = resumeDraft || (existing
+    ? { id: existing.id, name: existing.name, desc: existing.desc || '', steps: existing.steps.map((s) => ({ ...s })) }
+    : { id: uid(), name: '', desc: '', steps: [] });
+  const draw = () => {
+    $('pe-steps').innerHTML = draft.steps.map((s, i) => {
+      const vs = (exFor(s.exId) || {}).variations || [];
+      return `
+      <div class="plan-step-row">
+        <button class="btn small" data-up="${i}" ${i === 0 ? 'disabled style="opacity:0.3"' : ''} aria-label="Move up">↑</button>
+        <button class="btn small" data-down="${i}" ${i === draft.steps.length - 1 ? 'disabled style="opacity:0.3"' : ''} aria-label="Move down">↓</button>
+        <div class="n">${esc(displayName(s.exId, s.varId))}</div>
+        <div class="mins"><button class="btn small" data-mless="${i}" aria-label="One minute less">−</button> ${s.min}m <button class="btn small" data-mmore="${i}" aria-label="One minute more">+</button></div>
+        <button class="entry-x" data-rm="${i}" aria-label="Remove step">✕</button>
+        ${vs.length ? `<select class="mini step-var" data-var="${i}" aria-label="Variation">
+          <option value="">${esc(exFor(s.exId).title)} (general)</option>
+          ${vs.map((v) => `<option value="${v.id}" ${s.varId === v.id ? 'selected' : ''}>${esc(v.title)}</option>`).join('')}
+        </select>` : ''}
+      </div>`;
+    }).join('') || '<div class="muted">No steps yet.</div>';
+    document.querySelectorAll('#pe-steps [data-var]').forEach((sel) => sel.addEventListener('change', () => {
+      draft.steps[+sel.dataset.var].varId = sel.value || null;
+      draw();
+    }));
+    const swap = (i, j) => { const t = draft.steps[i]; draft.steps[i] = draft.steps[j]; draft.steps[j] = t; draw(); };
+    document.querySelectorAll('#pe-steps [data-up]').forEach((b) => b.addEventListener('click', () => {
+      const i = +b.dataset.up; if (i > 0) swap(i, i - 1);
+    }));
+    document.querySelectorAll('#pe-steps [data-down]').forEach((b) => b.addEventListener('click', () => {
+      const i = +b.dataset.down; if (i < draft.steps.length - 1) swap(i, i + 1);
+    }));
+    document.querySelectorAll('#pe-steps [data-rm]').forEach((b) => b.addEventListener('click', () => { draft.steps.splice(+b.dataset.rm, 1); draw(); }));
+    document.querySelectorAll('#pe-steps [data-mless]').forEach((b) => b.addEventListener('click', () => { const s = draft.steps[+b.dataset.mless]; s.min = Math.max(1, s.min - 1); draw(); }));
+    document.querySelectorAll('#pe-steps [data-mmore]').forEach((b) => b.addEventListener('click', () => { const s = draft.steps[+b.dataset.mmore]; s.min = Math.min(120, s.min + 1); draw(); }));
+  };
+  showOverlay(`
+    <div class="overlay" id="pe-ov">
+      <div class="sheet">
+        <div class="sheet-head"><div class="t">${existing ? 'Edit plan' : 'New plan'}</div><button class="btn small" id="pe-close">✕</button></div>
+        <div class="sheet-body">
+          <div class="field-label">Name</div>
+          <input class="text-input" id="pe-name" value="${esc(draft.name)}" placeholder="e.g. Lunch-break Reset">
+          <div class="field-label">Description</div>
+          <input class="text-input" id="pe-desc" value="${esc(draft.desc)}" placeholder="Optional">
+          <div class="field-label">Steps</div>
+          <div id="pe-steps"></div>
+          <div class="btn-row"><button class="btn" id="pe-add">➕ Add step</button></div>
+        </div>
+        <div class="sheet-foot"><button class="btn accent" id="pe-save">Save Plan</button></div>
+      </div>
+    </div>`);
+  draw();
+  $('pe-close').addEventListener('click', closeOverlay);
+  $('pe-add').addEventListener('click', () => {
+    draft.name = $('pe-name').value; draft.desc = $('pe-desc').value;
+    openPicker((exId) => {
+      const ex = exFor(exId);
+      draft.steps.push({ exId: exId, varId: null, min: suggestedMin(ex, null) });
+      editPlan(planId, draft); // reopen the editor with the draft intact
+    });
+  });
+  $('pe-save').addEventListener('click', async () => {
+    draft.name = $('pe-name').value.trim();
+    draft.desc = $('pe-desc').value.trim();
+    if (!draft.name) { toast('Give the plan a name'); return; }
+    if (!draft.steps.length) { toast('Add at least one step'); return; }
+    if (existing) Object.assign(existing, { name: draft.name, desc: draft.desc, steps: draft.steps, updatedAt: Date.now() });
+    else state.plans.push({ id: draft.id, name: draft.name, desc: draft.desc, steps: draft.steps, seeded: false, updatedAt: Date.now() });
+    saveState();
+    closeOverlay();
+    renderPlans();
+    toast('Plan saved');
+  });
+}
+/* ==================================================================
+   HISTORY
+   ================================================================== */
+let calMonth = null; // 'YYYY-MM'
+let calSelDay = null;
+function renderHistory() {
+  const p = $('panel-history');
+  if (!calMonth) calMonth = todayStr().slice(0, 7);
+  const [yy, mm] = calMonth.split('-').map(Number);
+  const first = new Date(yy, mm - 1, 1);
+  const days = dayTotals();
+  const startDow = (first.getDay() + 6) % 7; // Monday first
+  const dim = new Date(yy, mm, 0).getDate();
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div class="cal-day out"></div>';
+  for (let d = 1; d <= dim; d++) {
+    const ds = calMonth + '-' + String(d).padStart(2, '0');
+    const min = days[ds] || 0;
+    const dot = min ? (min >= 30 ? 'd3' : min >= 15 ? 'd2' : 'd1') : '';
+    cells += `<div class="cal-day ${ds === todayStr() ? 'today' : ''} ${ds === calSelDay ? 'sel' : ''}" data-day="${ds}" tabindex="0" role="button" aria-label="${ds}${min ? ', ' + min + ' minutes' : ''}"><span>${d}</span><span class="dot ${dot}"></span></div>`;
+  }
+  const monthName = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const list = state.sessions.slice().reverse().filter((s) => !calSelDay || s.date === calSelDay);
+  p.innerHTML = `
+    <div class="card">
+      <div class="cal-head">
+        <button class="btn small" id="cal-prev">‹</button>
+        <div class="m">${monthName}</div>
+        <button class="btn small" id="cal-next">›</button>
+      </div>
+      <div class="cal-grid">
+        ${['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => `<div class="cal-dow">${d}</div>`).join('')}
+        ${cells}
+      </div>
+      ${calSelDay ? `<div class="btn-row"><button class="btn small" id="cal-clear">Show all sessions</button></div>` : ''}
+    </div>
+    ${list.map((s) => `
+      <div class="sess-card" data-sid="${s.id}">
+        <div class="sess-head" tabindex="0" role="button" aria-expanded="false" onclick="toggleSess('${s.id}')">
+          <div class="chevron">▶</div>
+          <div class="d">${dateLabel(s.date)} ${s.feel ? `<span title="${FEELS[s.feel].l}">${FEELS[s.feel].i}</span>` : ''} ${s.planName ? `<span class="plan-chip">${esc(s.planName)}</span>` : ''}</div>
+          <div class="m">${fmtMin(sessionMin(s))} · ${s.entries.length} practice${s.entries.length === 1 ? '' : 's'}</div>
+        </div>
+        <div class="sess-body">
+          ${s.entries.map((e) => `
+            <div class="entry-row">
+              <div class="e-icon">${icons[(exFor(e.exId) || {}).icon] || icons.meditation || ''}</div>
+              <div class="e-name">${esc(displayName(e.exId, e.varId))}</div>
+              <input class="e-min-edit" type="number" min="1" max="600" value="${e.min}" aria-label="Minutes — ${esc(displayName(e.exId, e.varId))}" onchange="setEntryMin('${s.id}','${e.id}',this.value)">
+              <button class="entry-x" onclick="delHistEntry('${s.id}','${e.id}')" aria-label="Remove">✕</button>
+            </div>`).join('')}
+          <div class="field-label">How did it feel?</div>
+          <div class="feel-row">${[1, 2, 3, 4, 5].map((n) => `
+            <button type="button" class="feel ${s.feel === n ? 'on' : ''}" aria-pressed="${s.feel === n}" onclick="setSessFeel('${s.id}',${n})">${FEELS[n].i}<span class="fl">${FEELS[n].l}</span></button>`).join('')}</div>
+          <textarea class="session-note" placeholder="Session notes — what did you notice?" onchange="setSessNote('${s.id}',this.value)">${esc(s.notes || '')}</textarea>
+          <div class="btn-row">
+            <button class="btn accent small" onclick="repeatSession('${s.id}')">🔁 Practice this again</button>
+            <button class="btn danger small" onclick="delSession('${s.id}')">Delete session</button>
+          </div>
+        </div>
+      </div>`).join('') || '<div class="no-results">No sessions yet. Your history will appear here.</div>'}`;
+  $('cal-prev').addEventListener('click', () => { calMonth = shiftMonth(calMonth, -1); renderHistory(); });
+  $('cal-next').addEventListener('click', () => { calMonth = shiftMonth(calMonth, 1); renderHistory(); });
+  const cc = $('cal-clear');
+  if (cc) cc.addEventListener('click', () => { calSelDay = null; renderHistory(); });
+  document.querySelectorAll('.cal-day[data-day]').forEach((c) => c.addEventListener('click', () => {
+    calSelDay = calSelDay === c.dataset.day ? null : c.dataset.day;
+    renderHistory();
+  }));
+}
+function shiftMonth(ym, delta) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function toggleSess(sid) { setExpanded(document.querySelector(`.sess-card[data-sid="${sid}"]`), '.sess-head'); }
+/* a finished session stays editable: rate it, annotate it, or run it again */
+function setSessFeel(sid, n) {
+  const s = state.sessions.find((x) => x.id === sid);
+  if (!s) return;
+  s.feel = s.feel === n ? null : n;
+  s.updatedAt = Date.now();
+  saveState();
+  renderHistory();
+  toggleSess(sid); // re-open the card we just redrew
+}
+function setSessNote(sid, text) {
+  const s = state.sessions.find((x) => x.id === sid);
+  if (!s) return;
+  s.notes = String(text == null ? '' : text).slice(0, 2000);
+  s.updatedAt = Date.now();
+  saveState();
+}
+function repeatSession(sid) {
+  const s = state.sessions.find((x) => x.id === sid);
+  if (!s || !s.entries.length) return;
+  startPlanQueue(s.entries.map((e) => ({ exId: e.exId, varId: e.varId, min: e.min })), null, 'Repeat of ' + dateLabel(s.date));
+}
+/* deletions are undoable rather than confirmed: one tap to fix a mistake beats a
+   dialog on every correct delete. Clear-all keeps its double confirmation. */
+function delSession(sid) {
+  const i = state.sessions.findIndex((s) => s.id === sid);
+  if (i < 0) return;
+  const gone = state.sessions.splice(i, 1)[0];
+  saveState();
+  renderAll();
+  toast('Deleted ' + dateLabel(gone.date) + ' session', () => {
+    state.sessions.splice(i, 0, gone);
+    saveState();
+    renderAll();
+  });
+}
+function delHistEntry(sid, eid) {
+  const s = state.sessions.find((x) => x.id === sid);
+  if (!s) return;
+  const i = s.entries.findIndex((e) => e.id === eid);
+  if (i < 0) return;
+  const gone = s.entries.splice(i, 1)[0];
+  s.updatedAt = Date.now();
+  const alsoDropped = !s.entries.length;
+  if (alsoDropped) state.sessions = state.sessions.filter((x) => x.id !== sid);
+  saveState();
+  renderAll();
+  toast('Removed ' + displayName(gone.exId, gone.varId), () => {
+    s.entries.splice(i, 0, gone);
+    if (alsoDropped) { state.sessions.push(s); sortSessions(); }
+    saveState();
+    renderAll();
+  });
+}
+
+/* ==================================================================
+   STATS
+   ================================================================== */
+function weekStart(d) {
+  const x = new Date(d);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return todayStr(x);
+}
+/* a year of practice, one square per day. Columns are weeks starting Monday, so the
+   grid is filled column-first (see .heat-grid) and the first column is a Monday. */
+function heatmapHtml(days) {
+  const start = new Date();
+  start.setDate(start.getDate() - 363);
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const today = todayStr();
+  const cells = [], months = [];
+  let lastMonth = -1;
+  for (const d = new Date(start); todayStr(d) <= today; d.setDate(d.getDate() + 1)) {
+    const ds = todayStr(d);
+    const m = days[ds] || 0;
+    const lvl = m >= 45 ? 4 : m >= 25 ? 3 : m >= 10 ? 2 : m > 0 ? 1 : 0;
+    cells.push(`<div class="heat-cell${lvl ? ' h' + lvl : ''}${ds === today ? ' today' : ''}" title="${ds}${m ? ' · ' + fmtMin(m) : ' · rest'}"></div>`);
+    if (d.getDay() === 1) {
+      months.push(d.getMonth() !== lastMonth ? `<div>${d.toLocaleDateString(undefined, { month: 'short' })}</div>` : '<div></div>');
+      lastMonth = d.getMonth();
+    }
+  }
+  return `<div class="heat-wrap">
+      <div class="heat-months">${months.join('')}</div>
+      <div class="heat-grid">${cells.join('')}</div>
+    </div>
+    <div class="heat-legend">less ${[0, 1, 2, 3, 4].map((l) => `<span class="heat-cell${l ? ' h' + l : ''}"></span>`).join('')} more</div>`;
+}
+/* everything you've done with one practice: totals, and how it has come and gone */
+function openExStats(exId) {
+  const ex = exFor(exId);
+  if (!ex) return;
+  const h = exHistory(exId);
+  const weeks = [];
+  for (let i = 11; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i * 7); weeks.push({ key: weekStart(d), min: 0 }); }
+  allSessions().forEach((s) => s.entries.forEach((e) => {
+    if (e.exId !== exId) return;
+    const w = weeks.find((x) => x.key === weekStart(new Date(s.date + 'T12:00:00')));
+    if (w) w.min += e.min;
+  }));
+  const max = Math.max(1, ...weeks.map((w) => w.min));
+  const W = 320, H = 90, bw = W / 12;
+  const bars = weeks.map((w, i) => {
+    const bh = (w.min / max) * (H - 12);
+    return `<rect x="${(i * bw + 3).toFixed(1)}" y="${(H - bh).toFixed(1)}" width="${(bw - 6).toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="#b48aff"/>`;
+  }).join('');
+  showOverlay(`
+    <div class="overlay" id="xs-ov">
+      <div class="sheet">
+        <div class="sheet-head"><div class="t">${esc(ex.title)}</div><button class="btn small" id="xs-close" aria-label="Close">✕</button></div>
+        <div class="sheet-body">
+          ${h.n ? `
+            <div class="tile-grid">
+              <div class="tile"><div class="v">${h.n}</div><div class="l">times practised</div></div>
+              <div class="tile"><div class="v">${fmtMin(h.min)}</div><div class="l">total</div></div>
+              <div class="tile"><div class="v">${Math.round(h.min / h.n)}<span style="font-size:12px;color:#887a9a">m</span></div><div class="l">typical</div></div>
+              <div class="tile"><div class="v" style="font-size:15px">${dateLabel(h.last)}</div><div class="l">last practised</div></div>
+            </div>
+            <h2 style="font-size:13px;margin:6px 0">Last 12 weeks</h2>
+            <div class="chart-box"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="max-height:100px">${bars}</svg></div>
+          ` : '<div class="no-results">You haven’t practised this yet.</div>'}
+        </div>
+        <div class="sheet-foot">
+          <button class="btn accent" id="xs-practice">⏱ Practice</button>
+          <button class="btn" id="xs-log">➕ Log</button>
+        </div>
+      </div>
+    </div>`);
+  $('xs-close').addEventListener('click', closeOverlay);
+  $('xs-ov').addEventListener('click', (e) => { if (e.target.id === 'xs-ov') closeOverlay(); });
+  $('xs-practice').addEventListener('click', () => { closeOverlay(); openLogSheet(exId, 'timer'); });
+  $('xs-log').addEventListener('click', () => { closeOverlay(); openLogSheet(exId, 'log'); });
+}
+function renderStats() {
+  const p = $('panel-stats');
+  const days = dayTotals();
+  const s = streaks();
+  const totalMin = Object.values(days).reduce((a, b) => a + b, 0);
+  const sessCount = state.sessions.length + (active && active.entries.length ? 1 : 0);
+  const explored = new Set();
+  allSessions().forEach((ss) => ss.entries.forEach((e) => explored.add(e.exId)));
+  const thisWeek = Object.entries(days).filter(([ds]) => weekStart(new Date(ds + 'T12:00:00')) === weekStart(new Date())).reduce((t, [, m]) => t + m, 0);
+  const feels = allSessions().map((ss) => ss.feel).filter((f) => f >= 1 && f <= 5);
+  const avgFeel = feels.length ? feels.reduce((a, b) => a + b, 0) / feels.length : 0;
+
+  // last 12 weeks bars
+  const weeks = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i * 7);
+    weeks.push({ key: weekStart(d), min: 0 });
+  }
+  Object.entries(days).forEach(([ds, m]) => {
+    const wk = weekStart(new Date(ds + 'T12:00:00'));
+    const w = weeks.find((x) => x.key === wk);
+    if (w) w.min += m;
+  });
+  const maxWk = Math.max(state.goal.weeklyMin, ...weeks.map((w) => w.min), 1);
+  const W = 320, H = 110, bw = W / 12;
+  const goalY = H - (state.goal.weeklyMin / maxWk) * (H - 14);
+  const bars = weeks.map((w, i) => {
+    const h = (w.min / maxWk) * (H - 14);
+    return `<rect x="${(i * bw + 3).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw - 6).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${w.min >= state.goal.weeklyMin ? '#5fd068' : '#b48aff'}"/>` +
+      (w.min ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${(H - h - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="#887a9a">${w.min}</text>` : '');
+  }).join('');
+
+  // mega split
+  const megaMin = {};
+  allSessions().forEach((ss) => ss.entries.forEach((e) => {
+    const ex = EX_BY_ID[e.exId];
+    if (ex) megaMin[ex.mega] = (megaMin[ex.mega] || 0) + e.min;
+  }));
+  const megaMax = Math.max(1, ...Object.values(megaMin));
+
+  // day-of-week
+  const dow = [0, 0, 0, 0, 0, 0, 0];
+  Object.entries(days).forEach(([ds, m]) => { dow[(new Date(ds + 'T12:00:00').getDay() + 6) % 7] += m; });
+  const dowMax = Math.max(1, ...dow);
+
+  // time of day — only sessions actually run in the app (backdated ones have no real clock)
+  const TOD = ['Night', 'Early', 'Morning', 'Midday', 'Evening', 'Late'];
+  const tod = [0, 0, 0, 0, 0, 0];
+  allSessions().forEach((ss) => {
+    if (!ss.endedAt || !ss.startedAt) return;
+    tod[Math.floor(new Date(ss.startedAt).getHours() / 4)] += sessionMin(ss);
+  });
+  const todMax = Math.max(1, ...tod);
+
+  // top techniques
+  const perEx = {};
+  allSessions().forEach((ss) => ss.entries.forEach((e) => { perEx[e.exId] = (perEx[e.exId] || 0) + e.min; }));
+  const top = Object.entries(perEx).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const topMax = Math.max(1, ...(top.map((t) => t[1])));
+
+  // milestones
+  const hours = totalMin / 60;
+  const mile = (label, icon, value, ladder, fmt) => {
+    const next = ladder.find((l) => value < l);
+    const done = ladder.filter((l) => value >= l);
+    const prog = next ? Math.min(1, value / next) : 1;
+    return `<div class="mile-row ${!next ? 'done' : ''}">
+      <div class="icon">${icon}</div>
+      <div class="info">
+        <div class="n">${label}: ${done.length ? (fmt || ((x) => x))(done[done.length - 1]) + ' reached' : 'first target ' + (fmt || ((x) => x))(ladder[0])}</div>
+        <div class="p">${next ? (fmt || ((x) => x))(value) + ' of ' + (fmt || ((x) => x))(next) + ' · ' + done.length + '/' + ladder.length + ' tiers' : 'All ' + ladder.length + ' tiers complete 🏆'}</div>
+        <div class="mile-bar"><div class="f" style="width:${(prog * 100).toFixed(0)}%"></div></div>
+      </div>
+    </div>`;
+  };
+  const fmtH = (h) => (Math.round(h * 10) / 10) + 'h';
+
+  p.innerHTML = `
+    <div class="tile-grid">
+      <div class="tile hot"><div class="v">🔥 ${s.current}</div><div class="l">day streak</div></div>
+      <div class="tile"><div class="v">${s.best}</div><div class="l">best streak</div></div>
+      <div class="tile"><div class="v">${fmtH(hours)}</div><div class="l">total practice</div></div>
+      <div class="tile"><div class="v">${sessCount}</div><div class="l">sessions</div></div>
+      <div class="tile"><div class="v">${explored.size}${HAS_CONTENT ? `<span style="font-size:12px;color:#887a9a">/${exercises.length}</span>` : ''}</div><div class="l">explored</div></div>
+      <div class="tile"><div class="v">${thisWeek}<span style="font-size:12px;color:#887a9a">/${state.goal.weeklyMin}m</span></div><div class="l">this week</div></div>
+      <div class="tile"><div class="v">${avgFeel ? FEELS[Math.round(avgFeel)].i + ' ' + avgFeel.toFixed(1) : '—'}</div><div class="l">avg feel</div></div>
+    </div>
+    <div class="card">
+      <h2>Minutes per week <span class="muted">(goal ${state.goal.weeklyMin}m)</span></h2>
+      <div class="chart-box"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="max-height:130px">
+        ${bars}
+        <line x1="0" x2="${W}" y1="${goalY.toFixed(1)}" y2="${goalY.toFixed(1)}" stroke="#5fd068" stroke-width="1" stroke-dasharray="4,3" opacity="0.7"/>
+      </svg></div>
+    </div>
+    <div class="card">
+      <h2>The last year</h2>
+      ${heatmapHtml(days)}
+    </div>
+    <div class="card">
+      <h2>Practice by category</h2>
+      ${Object.entries(megaMin).sort((a, b) => b[1] - a[1]).map(([m, v]) => `
+        <div class="hbar-row"><div class="hl">${MEGA_LABELS[m] || m}</div><div class="hbar-track"><div class="hbar-fill" style="width:${(v / megaMax * 100).toFixed(0)}%;background:${megaColor(m)}"></div></div><div class="hv">${fmtMin(v)}</div></div>`).join('') || '<div class="muted">Log a session to see your split.</div>'}
+    </div>
+    <div class="card">
+      <h2>Day of week</h2>
+      ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => `
+        <div class="hbar-row"><div class="hl">${d}</div><div class="hbar-track"><div class="hbar-fill" style="width:${(dow[i] / dowMax * 100).toFixed(0)}%"></div></div><div class="hv">${dow[i] ? fmtMin(dow[i]) : ''}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <h2>Time of day</h2>
+      ${tod.some((v) => v) ? TOD.map((label, i) => `
+        <div class="hbar-row"><div class="hl">${label} ${i * 4}–${i * 4 + 4}</div><div class="hbar-track"><div class="hbar-fill" style="width:${(tod[i] / todMax * 100).toFixed(0)}%"></div></div><div class="hv">${tod[i] ? fmtMin(tod[i]) : ''}</div></div>`).join('')
+        : '<div class="muted">Run a session in the app to see when you practise.</div>'}
+    </div>
+    <div class="card">
+      <h2>Most practiced <span class="muted">— tap for detail</span></h2>
+      ${top.map(([id, v]) => `
+        <div class="hbar-row tap" tabindex="0" role="button" onclick="openExStats('${id}')"><div class="hl">${esc(displayName(id, null))}</div><div class="hbar-track"><div class="hbar-fill" style="width:${(v / topMax * 100).toFixed(0)}%"></div></div><div class="hv">${fmtMin(v)}</div></div>`).join('') || '<div class="muted">Nothing logged yet.</div>'}
+    </div>
+    <div class="card">
+      <h2>🏅 The Hunter’s Path</h2>
+      ${mile('Hours of practice', '⏳', hours, [1, 3, 10, 31.5, 100, 315], fmtH)}
+      ${mile('Longest streak', '🔥', s.best, [3, 7, 21, 54, 108], (x) => x + 'd')}
+      ${mile('Sessions', '🧘', sessCount, [10, 31, 108, 315])}
+      ${HAS_CONTENT ? mile('Techniques explored', '🧭', explored.size, [10, 31, 81, exercises.length]) : ''}
+    </div>`;
+  // a year is wider than a phone: open on the recent end, which is the end you care about
+  const hw = p.querySelector('.heat-wrap');
+  if (hw) hw.scrollLeft = hw.scrollWidth;
+}
+
+/* ==================================================================
+   SETTINGS
+   ================================================================== */
+function renderSettings() {
+  const p = $('panel-settings');
+  p.innerHTML = `
+    <div class="card">
+      <h2>🔔 Sound & cues</h2>
+      <div class="set-row">
+        <div class="sl">Bell<br><span class="d">Chime at timer start, end, and step changes</span></div>
+        <label class="switch"><input type="checkbox" id="set-bell" ${state.sound.bell ? 'checked' : ''}><span class="sl-track"></span></label>
+      </div>
+      <div class="set-row">
+        <div class="sl">Volume</div>
+        <input type="range" id="set-vol" min="0.05" max="1" step="0.05" value="${state.sound.volume}">
+        <button class="btn small" id="set-test">Test</button>
+      </div>
+      <div class="set-row">
+        <div class="sl">Interval bell<br><span class="d">Soft chime every N minutes during a timer</span></div>
+        <select class="mini" id="set-interval">
+          ${[0, 1, 2, 5, 10].map((n) => `<option value="${n}" ${state.sound.intervalMin === n ? 'selected' : ''}>${n === 0 ? 'Off' : 'Every ' + n + 'm'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="set-row">
+        <div class="sl">Step cue<br><span class="d">A short tone when the timer moves to the next atomic step</span></div>
+        <label class="switch"><input type="checkbox" id="set-stepcue" ${state.sound.stepCue ? 'checked' : ''}><span class="sl-track"></span></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🧍 Practice avatar</h2>
+      <div class="set-row">
+        <div class="sl">Show a 3D figure in the timer<br><span class="d">A stick figure performs the practice while you time it. Drag it to turn.</span></div>
+        <label class="switch"><input type="checkbox" id="set-avatar" ${state.avatar ? 'checked' : ''}><span class="sl-track"></span></label>
+      </div>
+      <div class="avatar-box preview" id="av-preview" title="Drag to turn"></div>
+      <div class="muted">${AV_REDUCED ? 'Your system asks for reduced motion, so the figure holds a still pose.' : 'Motions come from the content pack; practices without one breathe in a neutral pose.'}</div>
+    </div>
+    <div class="card">
+      <h2>🎯 Goal</h2>
+      <div class="set-row">
+        <div class="sl">Weekly minutes target</div>
+        <input class="mini" type="number" id="set-goal" min="10" max="2000" step="10" value="${state.goal.weeklyMin}" style="width:80px">
+      </div>
+    </div>
+    <div class="card">
+      <h2>💾 Data</h2>
+      <div class="btn-row">
+        <button class="btn" id="set-export">⬇ Export JSON</button>
+        <button class="btn" id="set-import">⬆ Import JSON</button>
+        <button class="btn" id="set-copy">📋 Copy summary</button>
+        <button class="btn" id="set-reseed">🌱 Re-seed plans</button>
+        <button class="btn danger" id="set-clear">🗑 Clear all data</button>
+      </div>
+      <input type="file" id="set-import-file" accept=".json,application/json" style="display:none">
+      <div class="muted" style="margin-top:8px">Everything lives in this browser’s localStorage. Export regularly — the JSON file is your backup.</div>
+    </div>
+    ${driveSettingsHtml()}
+    <div class="card">
+      <h2>ℹ️ About</h2>
+      <div class="about-block">
+        <strong>🏹 InsightHunter</strong> · ${APP_BUILD}<br>
+        A single-file practice tracker for meditation, yoga, breathwork & mind-body work —
+        a sibling of <strong>GymTracker315</strong>.<br><br>
+        <strong>Content pack:</strong> ${HAS_CONTENT
+          ? `loaded — ${exercises.length} practices, ${exercises.reduce((n, ex) => n + ((ex.variations || []).length), 0)} variations, ${glossary.length} glossary terms.`
+          : 'none loaded. The app runs standalone; drop a <code>content-pack.js</code> beside it to add a practice library and glossary.'}<br><br>
+        ${HAS_CONTENT ? `<strong>Educational only.</strong> This app is a personal practice log built by a software developer —
+        not a doctor, physiotherapist, or meditation teacher. Its steps, cues, and dosages are educational and
+        may not be right for you; several traditions represented here are normally learned with an experienced
+        teacher. Move gently, never force a stretch or a breath hold, and stop on pain, dizziness, or distress.
+        Consult a qualified professional where appropriate — you use this app entirely at your own risk.<br><br>` : ''}
+        <strong>Privacy:</strong> no account, no servers, no analytics. Your data never leaves your device
+        unless you export it.
+      </div>
+    </div>`;
+  $('set-bell').addEventListener('change', (e) => { state.sound.bell = e.target.checked; saveState(); });
+  $('set-avatar').addEventListener('change', (e) => { state.avatar = e.target.checked; saveState(); renderSettings(); });
+  if (state.avatar) AV.mount($('av-preview'), { clip: AV_CLIPS_BUILTIN.seated });
+  else $('av-preview').style.display = 'none';
+  $('set-vol').addEventListener('change', (e) => { state.sound.volume = +e.target.value; saveState(); });
+  $('set-test').addEventListener('click', () => { const was = state.sound.bell; state.sound.bell = true; bell(1); state.sound.bell = was; });
+  $('set-interval').addEventListener('change', (e) => { state.sound.intervalMin = +e.target.value; saveState(); });
+  $('set-stepcue').addEventListener('change', (e) => { state.sound.stepCue = e.target.checked; saveState(); if (e.target.checked) bell(1, true); });
+  $('set-goal').addEventListener('change', (e) => { state.goal.weeklyMin = Math.max(10, Math.min(2000, +e.target.value || 90)); saveState(); });
+  $('set-export').addEventListener('click', exportJson);
+  $('set-import').addEventListener('click', () => $('set-import-file').click());
+  $('set-import-file').addEventListener('change', importJson);
+  bindDriveSettings();
+  $('set-copy').addEventListener('click', copySummary);
+  $('set-reseed').addEventListener('click', () => { state.seededPlanIds = []; state.plans = state.plans.filter((pl) => !pl.seeded); seedPlans(); toast('Seed plans restored'); });
+  $('set-clear').addEventListener('click', clearAll);
+}
+function downloadBlob(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function backupPayload() {
+  return JSON.stringify({ app: 'InsightHunter', version: 1, savedAt: Date.now(), state: state }, null, 1);
+}
+function exportJson() {
+  state.lastExportAt = Date.now();
+  state.backupNudgedAt = 0;
+  saveState();
+  downloadBlob('insight-hunter-backup-' + todayStr() + '.json', backupPayload());
+  toast('Backup exported');
+}
+async function importJson(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  let obj;
+  try { obj = JSON.parse(await file.text()); } catch (err) { toast('Not a valid JSON file'); return; }
+  await applyBackup(obj, 'Import backup');
+}
+/* one restore path for a file on disk and a file in Drive */
+async function applyBackup(obj, title) {
+  const imp = obj && obj.app === 'InsightHunter' ? obj.state : (obj && Array.isArray(obj.sessions) ? obj : null);
+  if (!imp) { toast('Not an InsightHunter backup'); return false; }
+  const mode = await choiceDialog({
+    title: title,
+    msg: (imp.sessions || []).length + ' sessions · ' + (imp.plans || []).length + ' plans found.\n\nMerge keeps everything from both (imported wins on conflicts). Overwrite replaces all current data.',
+    buttons: [{ label: 'Merge', value: 'merge', kind: 'primary' }, { label: 'Overwrite', value: 'overwrite', kind: 'danger' }, { label: 'Cancel', value: null }],
+  });
+  if (!mode) return false;
+  if (mode === 'overwrite') {
+    // the OAuth client id is device config, not user data — never lose it to a restore
+    const keepCid = (state.sync && state.sync.driveClientId) || '';
+    state = { ...defaultState(), ...imp };
+    state.sync = { ...defaultState().sync, ...(imp.sync || {}) };
+    if (!state.sync.driveClientId) state.sync.driveClientId = keepCid;
+  } else {
+    const byId = (arr) => { const m = {}; (arr || []).forEach((x) => { m[x.id] = x; }); return m; };
+    const mergeArr = (cur, inc) => {
+      const m = byId(cur);
+      (inc || []).forEach((x) => {
+        const ex = m[x.id];
+        if (!ex || (x.updatedAt || 0) >= (ex.updatedAt || 0)) m[x.id] = x;
+      });
+      return Object.values(m);
+    };
+    state.sessions = mergeArr(state.sessions, imp.sessions).sort((a, b) => a.date < b.date ? -1 : 1);
+    state.plans = mergeArr(state.plans, imp.plans);
+    state.seededPlanIds = Array.from(new Set([...(state.seededPlanIds || []), ...(imp.seededPlanIds || [])]));
+    state.favorites = { ...(imp.favorites || {}), ...state.favorites };
+  }
+  saveState();
+  renderAll();
+  renderLibrary();
+  toast(title + ' complete (' + mode + ')');
+  return true;
+}
+function copySummary() {
+  const days = dayTotals();
+  const s = streaks();
+  const totalMin = Object.values(days).reduce((a, b) => a + b, 0);
+  const recent = Object.entries(days).sort((a, b) => b[0] < a[0] ? -1 : 1).slice(0, 14);
+  const feels = state.sessions.map((x) => x.feel).filter((f) => f >= 1 && f <= 5);
+  const lines = [
+    'InsightHunter practice summary — ' + todayStr(),
+    'Total: ' + fmtMin(totalMin) + ' across ' + state.sessions.length + ' sessions · streak ' + s.current + 'd (best ' + s.best + 'd)',
+    feels.length ? 'Average feel: ' + (feels.reduce((a, b) => a + b, 0) / feels.length).toFixed(1) + '/5 over ' + feels.length + ' rated sessions' : '',
+    '',
+    'Last 14 practiced days:',
+    ...recent.map(([d, m]) => '  ' + d + '  ' + fmtMin(m)),
+  ];
+  const text = lines.join('\n');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => toast('Summary copied'), () => toast('Copy failed'));
+  else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Summary copied'); } catch (e) { toast('Copy failed'); }
+    ta.remove();
+  }
+}
+async function clearAll() {
+  const a = await choiceDialog({ title: 'Clear all data?', msg: 'Sessions, plans, favorites and settings will be erased from this device.', buttons: [{ label: 'Continue', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
+  if (!a) return;
+  const b = await choiceDialog({ title: 'Really erase everything?', msg: 'This cannot be undone. Export a backup first if in doubt.', buttons: [{ label: 'Erase it all', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
+  if (!b) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(PENDING_KEY);
+  state = defaultState();
+  active = null;
+  seedPlans();
+  renderAll();
+  renderLibrary();
+  toast('All data cleared');
+}
+
+/* ==================================================================
+   GLOSSARY (ported from the guide)
+   ================================================================== */
+let glossSearch = '';
+let glossCat = 'all';
+function renderGlossCats() {
+  const el = $('gloss-cat-filter');
+  el.innerHTML = glossaryCategories.map((c) => `<div class="gloss-cat-pill ${c.id === glossCat ? 'active' : ''}" data-cat="${c.id}" tabindex="0" role="button" aria-pressed="${c.id === glossCat}">${c.label}</div>`).join('');
+  el.querySelectorAll('.gloss-cat-pill').forEach((p) => {
+    p.addEventListener('click', () => { glossCat = p.dataset.cat; renderGlossCats(); renderGlossary(); });
+  });
+}
+function renderGlossary() {
+  const body = $('gloss-body');
+  const q = glossSearch.toLowerCase();
+  const filtered = glossary.filter((g) => {
+    if (glossCat !== 'all' && g.cat !== glossCat) return false;
+    if (!q) return true;
+    return g.term.toLowerCase().includes(q) || (g.aka && g.aka.toLowerCase().includes(q)) || g.def.toLowerCase().includes(q);
+  });
+  filtered.sort((a, b) => a.term.toLowerCase().localeCompare(b.term.toLowerCase()));
+  if (filtered.length === 0) {
+    body.innerHTML = glossary.length
+      ? '<div class="gloss-no-results">No terms match. Try a different search or category.</div>'
+      : '<div class="gloss-no-results">No content pack loaded — the glossary lives in <code>content-pack.js</code>.</div>';
+    return;
+  }
+  const groups = {};
+  filtered.forEach((g) => {
+    const letter = g.term.charAt(0).toUpperCase();
+    const key = /[0-9]/.test(letter) ? '#' : letter;
+    (groups[key] = groups[key] || []).push(g);
+  });
+  const letters = Object.keys(groups).sort((a, b) => (a === '#' ? -1 : b === '#' ? 1 : a.localeCompare(b)));
+  const catLabels = {}; // glossary category vocabulary also comes from the pack
+  glossaryCategories.forEach((c) => { catLabels[c.id] = c.label; });
+  body.innerHTML = `<div class="gloss-count">${filtered.length} term${filtered.length === 1 ? '' : 's'}</div>` +
+    letters.map((L) => `
+      <div class="gloss-letter-header">${L}</div>
+      ${groups[L].map((g) => `
+        <div class="gloss-entry">
+          <div class="gloss-term-row">
+            <span class="gloss-term">${g.term}</span>
+            ${g.aka ? `<span class="gloss-aka">${g.aka}</span>` : ''}
+            <span class="gloss-cat-badge ${g.cat}">${catLabels[g.cat] || g.cat}</span>
+          </div>
+          <div class="gloss-def">${g.def}</div>
+        </div>`).join('')}
+    `).join('');
+}
+function openGloss() {
+  $('gloss-panel').classList.add('open');
+  $('gloss-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('gloss-search').focus(), 350);
+}
+function closeGloss() {
+  $('gloss-panel').classList.remove('open');
+  $('gloss-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ==================================================================
+   BOOT
+   ================================================================== */
+function boot() {
+  $('build-stamp').textContent = APP_BUILD;
+  seedPlans();
+
+  const tabs = [...document.querySelectorAll('#tabbar .tab')];
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab));
+    t.addEventListener('keydown', (e) => { // the tablist pattern: arrows move between tabs
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      const next = tabs[(i + d + tabs.length) % tabs.length];
+      next.focus();
+      switchTab(next.dataset.tab);
+    });
+  });
+
+  // library bindings
+  $('search').addEventListener('input', (e) => { currentSearch = e.target.value.trim().toLowerCase(); renderLibrary(); });
+  $('search').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.target.value = ''; currentSearch = ''; renderLibrary(); } });
+  $('clear-btn').addEventListener('click', () => { $('search').value = ''; currentSearch = ''; renderLibrary(); $('search').focus(); });
+  $('lib-sort').value = libSort;
+  $('lib-sort').addEventListener('change', (e) => { libSort = e.target.value; localStorage.setItem(LIBSORT_KEY, libSort); renderLibrary(); });
+  $('lib-random').addEventListener('click', randomPractice);
+  renderMegaFilter();
+  renderSubFilters();
+  renderLibrary();
+
+  // glossary bindings
+  $('gloss-btn').addEventListener('click', openGloss);
+  $('gloss-close').addEventListener('click', closeGloss);
+  $('gloss-backdrop').addEventListener('click', closeGloss);
+  $('gloss-search').addEventListener('input', (e) => { glossSearch = e.target.value.trim(); renderGlossary(); });
+  $('gloss-clear').addEventListener('click', () => { $('gloss-search').value = ''; glossSearch = ''; renderGlossary(); $('gloss-search').focus(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('gloss-panel').classList.contains('open')) closeGloss(); });
+  renderGlossCats();
+  renderGlossary();
+
+  // PWA shortcut targets. Closed whitelist — this value comes straight off the URL.
+  const go = new URLSearchParams(location.search).get('go');
+  if (go === 'session') { currentTab = 'practice'; if (!active) startSession(); }
+  else if (go === 'library' || go === 'plans' || go === 'stats') currentTab = go;
+
+  switchTab(currentTab);
+  renderStreakChip();
+  resumeTimer(); // offer to pick up a timer the browser interrupted
+  // reuse an existing Drive grant so auto-backup can fire; never pops a sign-in
+  if (state.sync.auto && driveClientId()) driveConnect({ silent: true }).catch(() => {});
+
+  if (location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+boot();
+
+</script>
+</body>
+</html>
