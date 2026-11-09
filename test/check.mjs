@@ -40,6 +40,9 @@ for (const needle of ['manifest.webmanifest', 'id="panel-practice"', 'id="gloss-
 }
 ok('shell essentials present');
 
+if (!/url=insight-hunter\.html/.test(readFileSync(join(root, 'index.html'), 'utf8'))) fail('index.html must hand the site root off to insight-hunter.html');
+else ok('index.html hands the site root off to the app');
+
 const kb = html.length / 1024;
 if (kb > 400) fail(`published app is ${kb.toFixed(0)} KB — larger than expected`);
 else ok(`published app is ${kb.toFixed(0)} KB, self-contained`);

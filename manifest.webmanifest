@@ -2,7 +2,7 @@
   "name": "InsightHunter",
   "short_name": "InsightHunter",
   "description": "Log meditation and mind-body practice \u2014 a guided timer that walks you through a technique step by step, plans, streaks and stats. Offline-first.",
-  "start_url": ".",
+  "start_url": "./insight-hunter.html",
   "scope": ".",
   "id": "./",
   "display": "standalone",
@@ -15,6 +15,19 @@
     "lifestyle"
   ],
   "shortcuts": [
+    {
+      "name": "History",
+      "short_name": "History",
+      "description": "Log a past sit or review the calendar",
+      "url": "./insight-hunter.html?go=history",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
     {
       "name": "Begin a session",
       "short_name": "Practice",

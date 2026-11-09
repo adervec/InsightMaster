@@ -12,7 +12,7 @@ HTML/CSS/JS, no runtime dependencies, no build step to use it).
 
 ## Run it
 
-Open `insight-hunter.html` in a Chromium browser — that's it. For the full PWA experience
+Hosted copy: **https://adervec.github.io/InsightMaster/** — or open `insight-hunter.html` in a Chromium browser. For the full PWA experience
 (service worker, offline cache, install prompt) run it from the local server:
 
 ```sh
@@ -27,12 +27,15 @@ On Windows you can also double-click **`launch.cmd`**.
 Open the served URL in Chrome and use **Install app** / **Add to Home Screen**. The manifest,
 icons and offline-first service worker are wired, and the test suite asserts the installability
 requirements. Installed, it runs standalone, portrait, fully offline, with home-screen shortcuts
-into a new session or the library.
+into a new session, the library or history. A new build announces itself with a one-tap **Reload**
+toast, and the app asks the browser for persistent storage so years of history aren't evicted.
 
 ## Features
 
 - **Practice** — start a session, add practices, or run a full-screen **timer** (countdown ring,
-  bell, optional interval bell, wake lock, +1 min, pause). The timer **walks you through the
+  bell, optional interval bell, wake lock, +1 min, pause, a settling-in countdown before the opening
+  bell, a 1–3× closing bell, vibration for silent sits, an **open-ended sit** that counts up until
+  you say Done, and tap the ring to hide the clock). The timer **walks you through the
   technique's steps in time with the countdown** — the current step is called out above the ring
   and highlighted below it, so the timer teaches rather than just ending. If the browser discards
   the tab mid-practice, the next launch offers the timer back.
@@ -53,11 +56,13 @@ into a new session or the library.
   the practice while you time it and breathes at its pace. Hand-rolled 3D (joints projected into
   SVG) — no WebGL, no libraries. Honours `prefers-reduced-motion`.
 - **Glossary** — a searchable slide-in panel, available from anywhere.
+- **Reminders** — a repeating daily calendar event (.ics) that opens the app, and an optional badge
+  on the installed icon until today's sit is logged. No notification permission, no server.
 - **Keyboard & touch** — every control is focusable and operable from the keyboard (`/` searches,
   Enter opens, Escape closes), sheets trap and restore focus, and the phone's back button closes
   the open sheet instead of leaving the app. Deletions offer **Undo** rather than a confirmation.
-- **Data** — JSON export/import (merge or overwrite), copy-as-text summary, and an optional
-  [Google Drive backup](#privacy).
+- **Data** — JSON export/import (merge or overwrite), CSV export, copy or share a text summary, and an
+  optional [Google Drive backup](#privacy).
 
 ## Content
 
@@ -137,6 +142,7 @@ edit it directly.
 
 ```
 insight-hunter.html       the app (generated)
+index.html                hands the site root off to the app (GitHub Pages)
 content/starter.json      the practice module that ships
 content-pack.js           empty placeholder; replace to load your own library
 src/shell.html            HTML + CSS shell

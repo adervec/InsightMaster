@@ -73,3 +73,9 @@ test('app boots identically over http (SW path)', async ({ page }) => {
   expect(await page.locator('#exercises .exercise').count()).toBeGreaterThanOrEqual(1);
   await expect(page.locator('h1 svg.logo')).toBeVisible();
 });
+
+test('the site root hands off to the app (GitHub Pages serves index.html)', async ({ request }) => {
+  const res = await request.get(BASE + 'index.html');
+  expect(res.status()).toBe(200);
+  expect(await res.text()).toContain('url=insight-hunter.html');
+});

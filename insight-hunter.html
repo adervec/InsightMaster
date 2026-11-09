@@ -290,6 +290,8 @@
   .timer-step-label { font-size: 11px; color: #b48aff; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; font-weight: 700; }
   .timer-ring-box { position: relative; width: min(62vw, 250px); height: min(62vw, 250px); margin: 14px 0 6px 0; flex-shrink: 0; }
   .timer-ring-box svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring-box { cursor: pointer; }
+  .timer-ring-box.blind .t-time { visibility: hidden; }
   .timer-ring-box .t-time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
   .timer-ring-box .t-time .t-sub { font-size: 11px; color: #887a9a; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
   .timer-controls { display: flex; gap: 9px; margin: 10px 0 14px 0; flex-wrap: wrap; justify-content: center; }
@@ -1076,7 +1078,8 @@ async function driveRestore() {
    Single file, offline-first, localStorage. Content library baked in from the
    Flexibility & Mind-Body Reference guide. */
 
-const APP_BUILD = 'build 1 · 2026-07-18';
+const APP_BUILD = 'build 2 · 2026-11-09';
+const APP_TITLE = document.title;
 const STORAGE_KEY = 'insight_hunter_v1';
 const PENDING_KEY = 'insight_hunter_pending_v1';
 const TAB_KEY = 'ih_tab';
@@ -1162,9 +1165,11 @@ function defaultState() {
     plans: [],          // {id, name, desc, steps:[{exId,varId,min}], seeded, updatedAt}
     seededPlanIds: [],
     favorites: {},
-    sound: { bell: true, volume: 0.5, intervalMin: 0, stepCue: false },
+    sound: { bell: true, volume: 0.5, intervalMin: 0, stepCue: false, prepSec: 0, endBells: 2, haptics: false },
     goal: { weeklyMin: 90 },
+    reminder: { time: '', badge: false }, // calendar .ics time, and the installed-icon badge
     avatar: false,      // opt-in 3D figure in the timer
+    hideCount: false,   // tap the timer ring to sit without watching the clock
     lastExportAt: 0,    // localStorage is the only copy until you export one
     backupNudgedAt: 0,
     // Google Drive backup. driveClientId is a fork's own OAuth client id (kept on this device);
@@ -1182,6 +1187,7 @@ function loadState() {
     const s = { ...defaultState(), ...JSON.parse(raw) };
     s.sound = { ...defaultState().sound, ...(s.sound || {}) };
     s.goal = { ...defaultState().goal, ...(s.goal || {}) };
+    s.reminder = { ...defaultState().reminder, ...(s.reminder || {}) };
     s.sync = { ...defaultState().sync, ...(s.sync || {}) };
     if (!Array.isArray(s.sessions)) s.sessions = [];
     if (!Array.isArray(s.plans)) s.plans = [];
@@ -1202,8 +1208,11 @@ function savePending() {
 /* ---------- audio bell ---------- */
 let _actx = null;
 function bell(times, soft) {
-  if (!state.sound.bell) return;
   times = times || 1;
+  if (state.sound.haptics && navigator.vibrate) {
+    try { navigator.vibrate(soft ? [40] : Array.from({ length: times }, () => [180, 400]).flat()); } catch (e) { /* no motor */ }
+  }
+  if (!state.sound.bell) return;
   // soft = the short single tone used to mark a guided step change, not a session boundary
   const partials = soft ? [880] : [528, 792, 1056];
   const peaks = soft ? [0.22] : [0.5, 0.22, 0.08];
@@ -1229,19 +1238,19 @@ function bell(times, soft) {
 
 /* ---------- toast & dialogs ---------- */
 let _toastT = null;
-function toast(msg, undo) {
+function toast(msg, undo, label) {
   const t = $('toast');
   t.textContent = msg;
   if (undo) {
     const b = document.createElement('button');
     b.className = 'toast-undo';
-    b.textContent = 'Undo';
+    b.textContent = label || 'Undo';
     b.addEventListener('click', () => { t.classList.remove('show'); clearTimeout(_toastT); undo(); });
     t.appendChild(b);
   }
   t.classList.add('show');
   clearTimeout(_toastT);
-  _toastT = setTimeout(() => t.classList.remove('show'), undo ? 6000 : 2200);
+  _toastT = setTimeout(() => t.classList.remove('show'), undo ? 8000 : 2200);
 }
 
 /* ---------- overlays: focus, Escape, and the phone's back button ----------
@@ -1368,6 +1377,7 @@ function renderStreakChip() {
   const el = $('streak-chip');
   el.textContent = '🔥 ' + s.current + ' day' + (s.current === 1 ? '' : 's');
   el.className = s.current ? '' : 'zero';
+  updateBadge();
 }
 
 /* ---------- tabs ---------- */
@@ -1954,7 +1964,7 @@ function openLogSheet(exId, mode) {
   let varId = null;
   let mins = suggestedMin(ex, null);
   const vars = ex.variations || [];
-  const drawMin = () => { $('ls-min').textContent = mins; };
+  const drawMin = () => { $('ls-min').textContent = mins || '∞'; };
   showOverlay(`
     <div class="overlay" id="ls-ov">
       <div class="sheet">
@@ -1969,7 +1979,7 @@ function openLogSheet(exId, mode) {
               ${vars.map((v) => `<option value="${v.id}">${esc(v.title)}</option>`).join('')}
             </select>` : ''}
           <div class="field-label">Minutes</div>
-          <div class="preset-row">${[3, 5, 10, 15, 20, 30, 45, 60].map((n) => `<button class="btn small ls-preset" data-n="${n}">${n}</button>`).join('')}</div>
+          <div class="preset-row">${[3, 5, 10, 15, 20, 30, 45, 60].map((n) => `<button class="btn small ls-preset" data-n="${n}">${n}</button>`).join('')}<button class="btn small ls-preset" data-n="0" title="Open sit — no set length, Done ends it">∞</button></div>
           <div class="minute-stepper">
             <button class="btn" id="ls-m5">−5</button><button class="btn" id="ls-m1">−1</button>
             <div class="val"><span id="ls-min"></span><span style="font-size:14px;color:#887a9a">m</span></div>
@@ -1992,7 +2002,7 @@ function openLogSheet(exId, mode) {
   const setMin = (n) => { mins = Math.min(180, Math.max(1, n)); drawMin(); };
   $('ls-close').addEventListener('click', closeOverlay);
   $('ls-ov').addEventListener('click', (e) => { if (e.target.id === 'ls-ov') closeOverlay(); });
-  document.querySelectorAll('.ls-preset').forEach((b) => b.addEventListener('click', () => setMin(+b.dataset.n)));
+  document.querySelectorAll('.ls-preset').forEach((b) => b.addEventListener('click', () => { const n = +b.dataset.n; if (n === 0) { mins = 0; drawMin(); } else setMin(n); }));
   $('ls-m5').addEventListener('click', () => setMin(mins - 5));
   $('ls-m1').addEventListener('click', () => setMin(mins - 1));
   $('ls-p1').addEventListener('click', () => setMin(mins + 1));
@@ -2007,7 +2017,7 @@ function openLogSheet(exId, mode) {
     d.setDate(d.getDate() - (+b.dataset.d));
     $('ls-date').value = todayStr(d);
   }));
-  $('ls-log').addEventListener('click', () => { const day = $('ls-date').value; closeOverlay(); logOn(exId, varId, mins, day); });
+  $('ls-log').addEventListener('click', () => { const day = $('ls-date').value; closeOverlay(); logOn(exId, varId, mins || suggestedMin(ex, getVar(exId, varId)), day); });
   $('ls-timer').addEventListener('click', () => { closeOverlay(); startTimer({ exId: exId, varId: varId, min: mins }); });
   if (mode === 'timer') { /* default focus on timer path — same sheet, user taps Start */ }
 }
@@ -2044,10 +2054,41 @@ function stepsFor(step) {
 function beginStep() {
   const step = T.queue[T.idx];
   T.stepStart = Date.now();
+  T.open = !step.min; // 0 minutes = open sit: count up until Done
   T.durMs = step.min * 60000;
   T.endTs = Date.now() + T.durMs;
   T.paused = false;
   T.lastBellMin = 0;
+  if (T.idx === 0 && state.sound.prepSec > 0 && !T.prepped) { T.prepped = true; runPrep(); return; }
+  bell(1);
+  runTimer();
+}
+/* A few quiet seconds before the opening bell, so the sit doesn't start while the phone is
+   still being put down. Only ahead of the first step; a plan flows on after that. Nothing is
+   persisted until the bell — a sit that never began is nothing to resume. */
+function runPrep() {
+  T.prepping = true;
+  T.steps = stepsFor(T.queue[T.idx]);
+  T.cueIdx = -1;
+  drawTimer();
+  grabWakeLock();
+  const end = Date.now() + state.sound.prepSec * 1000;
+  const tick = () => {
+    const left = Math.ceil((end - Date.now()) / 1000);
+    if (left <= 0) return endPrep();
+    const count = $('t-count'), cue = $('t-cue');
+    if (count) count.textContent = String(left);
+    if (cue) { cue.style.display = ''; cue.innerHTML = '<span class="n">Settling in</span>Find your seat — the bell begins the sit.'; }
+  };
+  clearInterval(_timerT);
+  _timerT = setInterval(tick, 250);
+  tick();
+}
+function endPrep() {
+  clearInterval(_timerT);
+  T.prepping = false;
+  T.stepStart = Date.now();
+  T.endTs = Date.now() + T.durMs;
   bell(1);
   runTimer();
 }
@@ -2080,9 +2121,19 @@ function paintCue() {
 }
 function timerTick() {
   if (!T || T.paused) return;
+  if (T.open) { // count up; the sit ends when you say so
+    const el = Date.now() - T.stepStart;
+    const c = $('t-count');
+    if (c) c.textContent = fmtClock(el / 1000);
+    document.title = fmtClock(el / 1000) + ' · ' + APP_TITLE;
+    const ivo = state.sound.intervalMin;
+    if (ivo > 0) { const em = Math.floor(el / 60000); if (em > T.lastBellMin && em % ivo === 0) { T.lastBellMin = em; bell(1); } }
+    return;
+  }
   const left = T.endTs - Date.now();
   const el = $('t-count');
   if (el) el.textContent = fmtClock(left / 1000);
+  document.title = fmtClock(left / 1000) + ' · ' + APP_TITLE; // the tab reads as a clock on desktop
   const ring = $('t-ring');
   if (ring) {
     const frac = Math.max(0, left / T.durMs);
@@ -2106,8 +2157,10 @@ function timerTick() {
   if (left <= 0) stepDone(true);
 }
 function stepDone(auto) {
+  if (T.prepping) { endPrep(); return; } // Done during the countdown = start now
   const step = T.queue[T.idx];
-  const actualMs = T.paused ? (T.durMs - T.remainMs) : Math.min(T.durMs, Date.now() - T.stepStart);
+  const actualMs = T.open ? (T.paused ? T.elapsedMs : Date.now() - T.stepStart)
+    : T.paused ? (T.durMs - T.remainMs) : Math.min(T.durMs, Date.now() - T.stepStart);
   const actualMin = Math.max(1, Math.round(actualMs / 60000));
   T.logged.push({ exId: step.exId, varId: step.varId, min: auto ? step.min : actualMin });
   if (T.idx < T.queue.length - 1) {
@@ -2129,7 +2182,7 @@ function saveTimer() {
   if (!T) { localStorage.removeItem(TIMER_KEY); return; }
   localStorage.setItem(TIMER_KEY, JSON.stringify({
     queue: T.queue, idx: T.idx, planId: T.planId, planName: T.planName, logged: T.logged,
-    endTs: T.endTs, durMs: T.durMs, paused: T.paused, remainMs: T.remainMs, savedAt: Date.now(),
+    endTs: T.endTs, durMs: T.durMs, paused: T.paused, remainMs: T.remainMs, stepStart: T.stepStart, elapsedMs: T.elapsedMs, savedAt: Date.now(),
   }));
 }
 async function resumeTimer() {
@@ -2137,21 +2190,24 @@ async function resumeTimer() {
   try { s = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null'); } catch (e) { s = null; }
   localStorage.removeItem(TIMER_KEY);
   if (!s || !Array.isArray(s.queue) || !s.queue.length || !s.queue[s.idx]) return;
-  const left = Math.max(0, s.paused ? (s.remainMs || 0) : s.endTs - Date.now());
   const step = s.queue[s.idx];
+  const open = !step.min;
+  const elapsed = open ? (s.paused ? (s.elapsedMs || 0) : Date.now() - (s.stepStart || s.savedAt)) : 0;
+  const left = Math.max(0, s.paused ? (s.remainMs || 0) : s.endTs - Date.now());
   const pick = await choiceDialog({
     title: '⏱ Timer interrupted',
-    msg: displayName(step.exId, step.varId) + (left > 1000
+    msg: displayName(step.exId, step.varId) + (open ? ' — open sit, ' + fmtClock(elapsed / 1000) + ' so far.' : left > 1000
       ? ' — ' + fmtClock(left / 1000) + ' still to run.'
       : ' — its time ran out while the app was closed.'),
     buttons: [
-      { label: left > 1000 ? 'Resume' : 'Finish it', value: 'go', kind: 'primary' },
+      { label: open || left > 1000 ? 'Resume' : 'Finish it', value: 'go', kind: 'primary' },
       { label: 'Discard', value: 'no' },
     ],
   });
   T = {
     queue: s.queue, idx: s.idx, planId: s.planId, planName: s.planName, logged: s.logged || [],
-    paused: false, durMs: s.durMs, endTs: Date.now() + left, stepStart: Date.now() - (s.durMs - left), lastBellMin: 0,
+    paused: false, durMs: s.durMs, endTs: Date.now() + left, lastBellMin: 0, open: open, prepped: true,
+    stepStart: open ? Date.now() - elapsed : Date.now() - (s.durMs - left),
   };
   if (pick === 'go') runTimer();
   else cancelTimer(); // keeps whatever steps had already completed
@@ -2159,7 +2215,8 @@ async function resumeTimer() {
 function finishTimer() {
   clearInterval(_timerT);
   releaseWakeLock();
-  bell(T.planId ? 3 : 2);
+  document.title = APP_TITLE;
+  bell(state.sound.endBells || 2);
   const logged = T.logged, planId = T.planId, planName = T.planName;
   T = null;
   saveTimer();
@@ -2175,6 +2232,7 @@ function finishTimer() {
 function cancelTimer() {
   clearInterval(_timerT);
   releaseWakeLock();
+  document.title = APP_TITLE;
   const logged = T ? T.logged : [];
   const planId = T && T.planId, planName = T && T.planName;
   T = null;
@@ -2192,12 +2250,13 @@ function pauseResume() {
   if (!T) return;
   if (T.paused) {
     T.endTs = Date.now() + T.remainMs;
-    T.stepStart = Date.now() - (T.durMs - T.remainMs);
+    T.stepStart = T.open ? Date.now() - T.elapsedMs : Date.now() - (T.durMs - T.remainMs);
     T.paused = false;
     grabWakeLock();
     $('t-pause').textContent = '⏸ Pause';
   } else {
     T.remainMs = Math.max(0, T.endTs - Date.now());
+    T.elapsedMs = Date.now() - T.stepStart;
     T.paused = true;
     releaseWakeLock();
     $('t-pause').textContent = '▶ Resume';
@@ -2220,16 +2279,16 @@ function drawTimer() {
       ${(v && v.sanskrit) || ex.sanskrit ? `<div class="timer-sanskrit">${esc((v && v.sanskrit) || ex.sanskrit)}</div>` : ''}
       ${state.avatar ? '<div class="avatar-box" id="av-box" title="Drag to turn"></div>' : ''}
       <div class="timer-cue" id="t-cue" aria-live="polite"></div>
-      <div class="timer-ring-box">
+      <div class="timer-ring-box${state.hideCount ? ' blind' : ''}" id="t-ringbox" title="Tap to hide or show the time">
         <svg viewBox="0 0 220 220">
           <circle cx="110" cy="110" r="100" fill="none" stroke="#1f1830" stroke-width="10"/>
           <circle id="t-ring" cx="110" cy="110" r="100" fill="none" stroke="#b48aff" stroke-width="10" stroke-linecap="round" stroke-dasharray="628" stroke-dashoffset="0"/>
         </svg>
-        <div class="t-time"><span id="t-count">${fmtClock(step.min * 60)}</span><span class="t-sub">${step.min} min</span></div>
+        <div class="t-time"><span id="t-count">${fmtClock(step.min * 60)}</span><span class="t-sub">${step.min ? step.min + ' min' : 'open sit'}</span></div>
       </div>
       <div class="timer-controls">
-        <button class="btn" id="t-pause">⏸ Pause</button>
-        <button class="btn" id="t-plus">+1 min</button>
+        <button class="btn" id="t-pause"${T.prepping ? ' style="display:none"' : ''}>⏸ Pause</button>
+        ${T.open ? '' : '<button class="btn" id="t-plus">+1 min</button>'}
         <button class="btn good" id="t-done">✔ Done</button>
         ${T.queue.length > 1 ? '<button class="btn" id="t-skip">⏭ Skip</button>' : ''}
         <button class="btn danger" id="t-cancel">✕</button>
@@ -2242,7 +2301,9 @@ function drawTimer() {
       </div>` : ''}
     </div>`);
   $('t-pause').addEventListener('click', pauseResume);
-  $('t-plus').addEventListener('click', plusMinute);
+  const plus = $('t-plus');
+  if (plus) plus.addEventListener('click', plusMinute);
+  $('t-ringbox').addEventListener('click', () => { state.hideCount = !state.hideCount; saveState(); $('t-ringbox').classList.toggle('blind', state.hideCount); });
   $('t-done').addEventListener('click', () => stepDone(false));
   $('t-cancel').addEventListener('click', cancelTimer);
   const sk = $('t-skip');
@@ -2667,11 +2728,16 @@ function renderStats() {
     </div>`;
   };
   const fmtH = (h) => (Math.round(h * 10) / 10) + 'h';
+  const sessMins = allSessions().filter((ss) => ss.entries.length).map(sessionMin);
+  const longest = sessMins.length ? fmtMin(Math.max(...sessMins)) : '–';
+  const avgSess = sessMins.length ? fmtMin(Math.round(sessMins.reduce((a, b) => a + b, 0) / sessMins.length)) : '–';
 
   p.innerHTML = `
     <div class="tile-grid">
       <div class="tile hot"><div class="v">🔥 ${s.current}</div><div class="l">day streak</div></div>
       <div class="tile"><div class="v">${s.best}</div><div class="l">best streak</div></div>
+      <div class="tile"><div class="v">${longest}</div><div class="l">longest sit</div></div>
+      <div class="tile"><div class="v">${avgSess}</div><div class="l">avg session</div></div>
       <div class="tile"><div class="v">${fmtH(hours)}</div><div class="l">total practice</div></div>
       <div class="tile"><div class="v">${sessCount}</div><div class="l">sessions</div></div>
       <div class="tile"><div class="v">${explored.size}${HAS_CONTENT ? `<span style="font-size:12px;color:#887a9a">/${exercises.length}</span>` : ''}</div><div class="l">explored</div></div>
@@ -2749,6 +2815,22 @@ function renderSettings() {
         <div class="sl">Step cue<br><span class="d">A short tone when the timer moves to the next atomic step</span></div>
         <label class="switch"><input type="checkbox" id="set-stepcue" ${state.sound.stepCue ? 'checked' : ''}><span class="sl-track"></span></label>
       </div>
+      <div class="set-row">
+        <div class="sl">Settling-in countdown<br><span class="d">Quiet seconds before the opening bell</span></div>
+        <select class="mini" id="set-prep">
+          ${[0, 5, 10, 15, 30, 60].map((n) => `<option value="${n}" ${state.sound.prepSec === n ? 'selected' : ''}>${n === 0 ? 'Off' : n + 's'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="set-row">
+        <div class="sl">Closing bell<br><span class="d">How many times it sounds when the sit ends</span></div>
+        <select class="mini" id="set-endbells">
+          ${[1, 2, 3].map((n) => `<option value="${n}" ${state.sound.endBells === n ? 'selected' : ''}>${n}×</option>`).join('')}
+        </select>
+      </div>
+      <div class="set-row">
+        <div class="sl">Vibrate<br><span class="d">Buzz with each bell — works with the sound off, for a silent sit</span></div>
+        <label class="switch"><input type="checkbox" id="set-haptics" ${state.sound.haptics ? 'checked' : ''}><span class="sl-track"></span></label>
+      </div>
     </div>
     <div class="card">
       <h2>🧍 Practice avatar</h2>
@@ -2767,11 +2849,25 @@ function renderSettings() {
       </div>
     </div>
     <div class="card">
+      <h2>⏰ Daily reminder</h2>
+      <div class="set-row">
+        <div class="sl">Calendar reminder<br><span class="d">Saves a repeating daily event that opens the app. No notifications to grant, no server.</span></div>
+        <input class="mini" type="time" id="set-rem-time" value="${esc(state.reminder.time || '07:00')}" aria-label="Reminder time">
+        <button class="btn small" id="set-rem-ics">📅 Add</button>
+      </div>
+      ${'setAppBadge' in navigator ? `<div class="set-row">
+        <div class="sl">Badge until today’s sit<br><span class="d">A dot on the installed app icon until something is logged today</span></div>
+        <label class="switch"><input type="checkbox" id="set-badge" ${state.reminder.badge ? 'checked' : ''}><span class="sl-track"></span></label>
+      </div>` : ''}
+    </div>
+    <div class="card">
       <h2>💾 Data</h2>
       <div class="btn-row">
         <button class="btn" id="set-export">⬇ Export JSON</button>
         <button class="btn" id="set-import">⬆ Import JSON</button>
+        <button class="btn" id="set-csv">⬇ Export CSV</button>
         <button class="btn" id="set-copy">📋 Copy summary</button>
+        ${navigator.share ? '<button class="btn" id="set-share">📤 Share summary</button>' : ''}
         <button class="btn" id="set-reseed">🌱 Re-seed plans</button>
         <button class="btn danger" id="set-clear">🗑 Clear all data</button>
       </div>
@@ -2805,7 +2901,17 @@ function renderSettings() {
   $('set-test').addEventListener('click', () => { const was = state.sound.bell; state.sound.bell = true; bell(1); state.sound.bell = was; });
   $('set-interval').addEventListener('change', (e) => { state.sound.intervalMin = +e.target.value; saveState(); });
   $('set-stepcue').addEventListener('change', (e) => { state.sound.stepCue = e.target.checked; saveState(); if (e.target.checked) bell(1, true); });
+  $('set-prep').addEventListener('change', (e) => { state.sound.prepSec = +e.target.value; saveState(); });
+  $('set-endbells').addEventListener('change', (e) => { state.sound.endBells = +e.target.value; saveState(); });
+  $('set-haptics').addEventListener('change', (e) => { state.sound.haptics = e.target.checked; saveState(); if (e.target.checked && navigator.vibrate) navigator.vibrate(180); });
   $('set-goal').addEventListener('change', (e) => { state.goal.weeklyMin = Math.max(10, Math.min(2000, +e.target.value || 90)); saveState(); });
+  $('set-rem-time').addEventListener('change', (e) => { state.reminder.time = e.target.value; saveState(); });
+  $('set-rem-ics').addEventListener('click', () => { state.reminder.time = $('set-rem-time').value || '07:00'; saveState(); downloadBlob('insight-hunter-reminder.ics', reminderIcs(), 'text/calendar'); toast('Reminder saved — open it to add it to your calendar'); });
+  const badge = $('set-badge');
+  if (badge) badge.addEventListener('change', (e) => { state.reminder.badge = e.target.checked; saveState(); updateBadge(); });
+  $('set-csv').addEventListener('click', () => { downloadBlob('insight-hunter-' + todayStr() + '.csv', csvText(), 'text/csv'); toast('CSV exported'); });
+  const share = $('set-share');
+  if (share) share.addEventListener('click', () => navigator.share({ title: 'InsightHunter', text: summaryText() }).catch(() => {}));
   $('set-export').addEventListener('click', exportJson);
   $('set-import').addEventListener('click', () => $('set-import-file').click());
   $('set-import-file').addEventListener('change', importJson);
@@ -2814,15 +2920,42 @@ function renderSettings() {
   $('set-reseed').addEventListener('click', () => { state.seededPlanIds = []; state.plans = state.plans.filter((pl) => !pl.seeded); seedPlans(); toast('Seed plans restored'); });
   $('set-clear').addEventListener('click', clearAll);
 }
-function downloadBlob(name, text) {
+function downloadBlob(name, text, type) {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.href = URL.createObjectURL(new Blob([text], { type: type || 'application/json' }));
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 function backupPayload() {
   return JSON.stringify({ app: 'InsightHunter', version: 1, savedAt: Date.now(), state: state }, null, 1);
+}
+/* One row per logged practice, for spreadsheets. */
+function csvText() {
+  const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [['date', 'session_start', 'practice', 'variation', 'minutes', 'feel', 'plan', 'notes']];
+  allSessions().slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).forEach((s) => s.entries.forEach((e) => {
+    const ex = exFor(e.exId), v = getVar(e.exId, e.varId);
+    rows.push([s.date, s.startedAt ? new Date(s.startedAt).toISOString() : '', ex ? ex.title : e.exId, v ? v.title : '', e.min, s.feel || '', s.planName || '', s.notes || '']);
+  }));
+  return rows.map((r) => r.map(q).join(',')).join('\r\n');
+}
+/* A repeating calendar event is the one daily reminder that needs no permission and no server.
+   Floating local time on purpose: 7:00 means 7:00 wherever you wake up. */
+function reminderIcs() {
+  const hhmm = (state.reminder.time || '07:00').replace(':', '') + '00';
+  const url = location.href.split(/[?#]/)[0];
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//InsightHunter//EN', 'BEGIN:VEVENT',
+    'UID:insight-hunter-daily-' + hhmm + '@insight-hunter', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
+    'DTSTART:' + todayStr().replace(/-/g, '') + 'T' + hhmm, 'DURATION:PT15M', 'RRULE:FREQ=DAILY',
+    'SUMMARY:Sit — InsightHunter', 'DESCRIPTION:Your daily practice. Open the app: ' + url, 'URL:' + url,
+    'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Time to sit', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+function updateBadge() {
+  if (!('setAppBadge' in navigator)) return;
+  const due = state.reminder.badge && !dayTotals()[todayStr()];
+  try { (due ? navigator.setAppBadge(1) : navigator.clearAppBadge()).catch(() => {}); } catch (e) { /* not installed */ }
 }
 function exportJson() {
   state.lastExportAt = Date.now();
@@ -2876,7 +3009,7 @@ async function applyBackup(obj, title) {
   toast(title + ' complete (' + mode + ')');
   return true;
 }
-function copySummary() {
+function summaryText() {
   const days = dayTotals();
   const s = streaks();
   const totalMin = Object.values(days).reduce((a, b) => a + b, 0);
@@ -2890,7 +3023,10 @@ function copySummary() {
     'Last 14 practiced days:',
     ...recent.map(([d, m]) => '  ' + d + '  ' + fmtMin(m)),
   ];
-  const text = lines.join('\n');
+  return lines.join('\n');
+}
+function copySummary() {
+  const text = summaryText();
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => toast('Summary copied'), () => toast('Copy failed'));
   else {
     const ta = document.createElement('textarea');
@@ -3020,7 +3156,7 @@ function boot() {
   // PWA shortcut targets. Closed whitelist — this value comes straight off the URL.
   const go = new URLSearchParams(location.search).get('go');
   if (go === 'session') { currentTab = 'practice'; if (!active) startSession(); }
-  else if (go === 'library' || go === 'plans' || go === 'stats') currentTab = go;
+  else if (go === 'library' || go === 'plans' || go === 'history' || go === 'stats') currentTab = go;
 
   switchTab(currentTab);
   renderStreakChip();
@@ -3028,8 +3164,21 @@ function boot() {
   // reuse an existing Drive grant so auto-backup can fire; never pops a sign-in
   if (state.sync.auto && driveClientId()) driveConnect({ silent: true }).catch(() => {});
 
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* ask the browser not to evict years of history */ }
   if (location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // a new build installed behind the running one: offer the reload instead of waiting for the next launch
+      const offer = () => toast('Update ready', () => { if (reg.waiting) reg.waiting.postMessage('skipWaiting'); location.reload(); }, 'Reload');
+      if (reg.waiting && navigator.serviceWorker.controller) offer();
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        if (w) w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) offer(); });
+      });
+      let lastCheck = 0; // an installed app left open for days still finds new builds
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && Date.now() - lastCheck > 60000) { lastCheck = Date.now(); reg.update().catch(() => {}); }
+      });
+    }).catch(() => {});
   }
 }
 boot();

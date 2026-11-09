@@ -290,6 +290,8 @@
   .timer-step-label { font-size: 11px; color: #b48aff; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; font-weight: 700; }
   .timer-ring-box { position: relative; width: min(62vw, 250px); height: min(62vw, 250px); margin: 14px 0 6px 0; flex-shrink: 0; }
   .timer-ring-box svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring-box { cursor: pointer; }
+  .timer-ring-box.blind .t-time { visibility: hidden; }
   .timer-ring-box .t-time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
   .timer-ring-box .t-time .t-sub { font-size: 11px; color: #887a9a; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
   .timer-controls { display: flex; gap: 9px; margin: 10px 0 14px 0; flex-wrap: wrap; justify-content: center; }

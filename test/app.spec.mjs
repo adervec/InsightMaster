@@ -398,3 +398,86 @@ test('avatar is off by default, and animates the practice when enabled', async (
   await expect(page.locator('.timer-wrap .av-caption')).toHaveText(/Inhale|Exhale/);
   await page.click('#t-cancel');
 });
+
+test('a settling-in countdown runs before the opening bell, and Done starts the sit at once', async ({ page }) => {
+  await page.click('.tab[data-tab="settings"]');
+  await page.selectOption('#set-prep', '30');
+  await page.click('.tab[data-tab="plans"]');
+  await page.locator('.plan-card .btn.accent').first().click();
+  await expect(page.locator('#t-cue')).toContainText('Settling in');
+  await expect(page.locator('#t-pause')).toBeHidden();
+  expect(await page.evaluate(() => localStorage.getItem('ih_timer_v1'))).toBeNull(); // nothing to resume until the bell
+  await page.click('#t-done');
+  await expect(page.locator('#t-cue')).toContainText('Step 1 of');
+  await expect(page.locator('#t-pause')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('ih_timer_v1'))).not.toBeNull();
+  await page.click('#t-cancel');
+});
+
+test('an open-ended sit counts up, survives a reload, and logs the time actually sat', async ({ page }) => {
+  await page.click('.tab[data-tab="library"]');
+  await page.fill('#search', 'sitting');
+  await page.locator('.exercise-header').first().click();
+  await page.locator('.exercise.open > .exercise-body > .ex-actions .btn.accent').first().click();
+  await page.click('.ls-preset[data-n="0"]');
+  await expect(page.locator('#ls-min')).toHaveText('∞');
+  await page.click('#ls-timer');
+  await expect(page.locator('.t-sub')).toContainText('open sit');
+  await expect(page.locator('#t-plus')).toHaveCount(0);
+  await page.evaluate(() => { T.stepStart = Date.now() - 7 * 60000; saveTimer(); }); // pretend seven minutes have passed
+  await expect(page.locator('#t-count')).toContainText('7:0');
+  await page.reload();
+  await expect(page.locator('#dlg-ov')).toContainText('open sit');
+  await page.click('#dlg-ov .btn.primary');
+  await expect(page.locator('#t-count')).toContainText('7:0');
+  await page.click('#t-done');
+  await page.click('.tab[data-tab="practice"]');
+  await expect(page.locator('.e-min-edit')).toHaveValue('7');
+});
+
+test('tapping the ring hides the clock, and the choice sticks', async ({ page }) => {
+  await page.click('.tab[data-tab="plans"]');
+  await page.locator('.plan-card .btn.accent').first().click();
+  await expect(page.locator('#t-ringbox .t-time')).toBeVisible();
+  await page.click('#t-ringbox');
+  await expect(page.locator('#t-ringbox .t-time')).toBeHidden();
+  await page.click('#t-cancel');
+  await page.locator('.plan-card .btn.accent').first().click();
+  await expect(page.locator('#t-ringbox .t-time')).toBeHidden();
+  await page.click('#t-ringbox');
+  await expect(page.locator('#t-ringbox .t-time')).toBeVisible();
+  await page.click('#t-cancel');
+});
+
+test('CSV export has one row per logged practice, and the reminder is a daily calendar event', async ({ page }) => {
+  await page.click('#begin-btn');
+  await page.click('#add-practice-btn');
+  await page.fill('#picker-q', 'sitting');
+  await page.locator('.picker-row').first().click();
+  await page.click('#ls-log');
+  const csv = await page.evaluate(() => csvText());
+  const lines = csv.split('\r\n');
+  expect(lines[0]).toBe('"date","session_start","practice","variation","minutes","feel","plan","notes"');
+  expect(lines.length).toBe(2);
+  expect(lines[1]).toContain('"Sitting Meditation"');
+  await page.click('.tab[data-tab="settings"]');
+  await page.fill('#set-rem-time', '06:30');
+  await page.locator('#set-rem-time').dispatchEvent('change');
+  const ics = await page.evaluate(() => reminderIcs());
+  expect(ics).toContain('RRULE:FREQ=DAILY');
+  expect(ics).toContain('T063000');
+  expect(ics).toContain('BEGIN:VALARM');
+});
+
+test('closing-bell count and vibrate settings persist', async ({ page }) => {
+  await page.click('.tab[data-tab="settings"]');
+  await page.selectOption('#set-endbells', '3');
+  await page.click('label.switch:has(#set-haptics)');
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('insight_hunter_v1')).sound);
+  expect(stored.endBells).toBe(3);
+  expect(stored.haptics).toBe(true);
+  await page.reload();
+  await page.click('.tab[data-tab="settings"]');
+  await expect(page.locator('#set-endbells')).toHaveValue('3');
+  await expect(page.locator('#set-haptics')).toBeChecked();
+});
