@@ -1,0 +1,31 @@
+[
+  {
+    "date": "2026-11-10",
+    "version": "Build 4",
+    "items": [
+      "Erase everything now clears only this app's data. Your other apps here and your Google Drive backup are left alone, and the prompt says so.",
+      "Each session you finish now counts towards the streak on the maker portal."
+    ]
+  },
+  {
+    "date": "2026-11-09",
+    "version": "Build 3",
+    "items": [
+      "Easier reading: Atkinson Hyperlegible is the new default font.",
+      "Prefer another? Settings → Font offers System, Serif and Monospace, and the choice carries across every app on this site."
+    ]
+  },
+  {
+    "date": "2026-11-09",
+    "version": "Build 2",
+    "items": [
+      "Settle in before the bell: an optional countdown of quiet seconds before the sit begins.",
+      "Open-ended sits: pick ∞ and the timer counts up until you tap Done, then logs the time you actually sat.",
+      "Tap the timer ring to hide the clock and sit without watching the minutes.",
+      "Choose a closing bell of one, two or three strikes, and turn on vibration for a silent sit.",
+      "A daily reminder you add to your own calendar, and an optional badge on the app icon until today's sit is logged.",
+      "Export your history as CSV for a spreadsheet, or share a text summary.",
+      "Stats now show your longest sit and your average session."
+    ]
+  }
+]

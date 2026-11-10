@@ -46,6 +46,15 @@ ok('shell essentials present');
 if (!/url=insight-hunter\.html/.test(readFileSync(join(root, 'index.html'), 'utf8'))) fail('index.html must hand the site root off to insight-hunter.html');
 else ok('index.html hands the site root off to the app');
 
+{
+  const wn = JSON.parse(readFileSync(join(root, 'whatsnew.json'), 'utf8'));
+  const dates = wn.map((e) => e.date);
+  if (!html.includes('<meta name="app-whatsnew" content="whatsnew.json">')) fail('missing <meta name="app-whatsnew">');
+  else if (!Array.isArray(wn) || !wn.length || wn.some((e) => !/^\d{4}-\d{2}-\d{2}$/.test(e.date) || !Array.isArray(e.items) || !e.items.length)) fail('whatsnew.json entries need a YYYY-MM-DD date and items');
+  else if (dates.some((d, i) => i && d > dates[i - 1])) fail('whatsnew.json must be newest first');
+  else ok(`what's new: ${wn.length} entries, newest first, linked from the page`);
+}
+
 const kb = html.length / 1024;
 if (kb > 400) fail(`published app is ${kb.toFixed(0)} KB — larger than expected`);
 else ok(`published app is ${kb.toFixed(0)} KB, self-contained`);

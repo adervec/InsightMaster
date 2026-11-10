@@ -150,6 +150,7 @@ edit it directly.
 ```
 insight-hunter.html       the app (generated)
 index.html                hands the site root off to the app (GitHub Pages)
+whatsnew.json             what's new, newest first; shown once after an update
 content/starter.json      the practice module that ships
 content-pack.js           empty placeholder; replace to load your own library
 src/shell.html            HTML + CSS shell

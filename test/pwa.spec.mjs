@@ -82,3 +82,20 @@ test('the site root hands off to the app (GitHub Pages serves index.html)', asyn
   expect(res.status()).toBe(200);
   expect(await res.text()).toContain('url=insight-hunter.html');
 });
+
+test('what’s new appears once after an update, with the newest entry, and whatsnew.json is served fresh', async ({ page, request }) => {
+  const res = await request.get(BASE + 'whatsnew.json');
+  expect(res.status()).toBe(200);
+  const list = await res.json();
+  await page.goto(APP);
+  // first visit records what is current and shows nothing
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).find((k) => k.startsWith('maker-seen:')) || '')).not.toBe('');
+  await expect(page.locator('#app-whatsnew')).toHaveCount(0);
+  // pretend the reader last saw an older build
+  await page.evaluate(() => { const k = Object.keys(localStorage).find((x) => x.startsWith('maker-seen:')); localStorage.setItem(k, 'older|2000-01-01|x'); });
+  await page.reload();
+  await expect(page.locator('#app-whatsnew')).toContainText(list[0].items[0].slice(0, 30));
+  await page.locator('#app-whatsnew button', { hasText: 'OK' }).click();
+  await page.reload();
+  await expect(page.locator('#app-whatsnew')).toHaveCount(0);
+});

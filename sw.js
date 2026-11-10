@@ -27,6 +27,7 @@ self.addEventListener('fetch', (e) => {
   let url;
   try { url = new URL(req.url); } catch (_) { return; }
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith('/whatsnew.json')) return; // always fresh from the network, or what's-new never changes
 
   if (req.mode === 'navigate') {
     e.respondWith(
