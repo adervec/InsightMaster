@@ -32,8 +32,11 @@ test('an install shortcut lands on the right screen and starts a session', async
 test('service worker registers, activates, and caches the shell', async ({ page }) => {
   await page.goto(APP);
   const state = await page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.ready; // resolves once active
-    return reg.active && reg.active.state;
+    // `ready` resolves as soon as there is an active worker, which can still be "activating"
+    // on a slow machine — wait for it to settle rather than racing it.
+    const sw = (await navigator.serviceWorker.ready).active;
+    if (sw.state !== 'activated') await new Promise((r) => sw.addEventListener('statechange', () => sw.state === 'activated' && r()));
+    return sw.state;
   });
   expect(state).toBe('activated');
   const cached = await page.evaluate(async () => {
