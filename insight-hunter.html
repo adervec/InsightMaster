@@ -9,10 +9,13 @@
 <link rel="icon" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230c0a14'/%3E%3Ccircle cx='256' cy='256' r='130' fill='none' stroke='%23b48aff' stroke-width='34' stroke-linecap='round' stroke-dasharray='700 117' transform='rotate(-55 256 256)'/%3E%3Cpolygon points='332,112 396,96 380,160' fill='%23b48aff'/%3E%3Ccircle cx='256' cy='256' r='26' fill='%23b48aff'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- house font: Atkinson Hyperlegible by default, reader-changeable under Settings. Same origin as the
+     deployed app; a downloaded copy that can't reach it simply keeps the system font. -->
+<script src="https://adervec.github.io/font.js"></script>
 <style>
   /* ============ base (from the Mind-Body guide, kept verbatim where possible) ============ */
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0c0a14; color: #e8e6f0; line-height: 1.5; }
+  body { margin: 0; font-family: var(--app-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif); background: #0c0a14; color: #e8e6f0; line-height: 1.5; }
   header#app-header { position: sticky; top: 0; background: #0c0a14; border-bottom: 1px solid #221c30; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0 14px; z-index: 100; }
   h1 { font-size: 17px; margin: 0 0 8px 0; color: #fff; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   h1 .stamp { font-size: 10px; color: #6a5a8a; font-weight: 400; letter-spacing: 0.3px; }
@@ -1078,7 +1081,7 @@ async function driveRestore() {
    Single file, offline-first, localStorage. Content library baked in from the
    Flexibility & Mind-Body Reference guide. */
 
-const APP_BUILD = 'build 2 · 2026-11-09';
+const APP_BUILD = 'build 3 · 2026-11-09';
 const APP_TITLE = document.title;
 const STORAGE_KEY = 'insight_hunter_v1';
 const PENDING_KEY = 'insight_hunter_pending_v1';
@@ -2861,6 +2864,14 @@ function renderSettings() {
       </div>` : ''}
     </div>
     <div class="card">
+      <h2>🔤 Font</h2>
+      <div class="set-row">
+        <div class="sl">Reading font<br><span class="d">Atkinson Hyperlegible by default. The choice is shared by every app on this site.</span></div>
+        ${window.appFont ? `<select class="mini" id="set-font" aria-label="Reading font">${window.appFont.options.map((o) => `<option value="${o.id}" ${window.appFont.get() === o.id ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+          : '<span class="muted">Available on the hosted copy</span>'}
+      </div>
+    </div>
+    <div class="card">
       <h2>💾 Data</h2>
       <div class="btn-row">
         <button class="btn" id="set-export">⬇ Export JSON</button>
@@ -2907,6 +2918,8 @@ function renderSettings() {
   $('set-goal').addEventListener('change', (e) => { state.goal.weeklyMin = Math.max(10, Math.min(2000, +e.target.value || 90)); saveState(); });
   $('set-rem-time').addEventListener('change', (e) => { state.reminder.time = e.target.value; saveState(); });
   $('set-rem-ics').addEventListener('click', () => { state.reminder.time = $('set-rem-time').value || '07:00'; saveState(); downloadBlob('insight-hunter-reminder.ics', reminderIcs(), 'text/calendar'); toast('Reminder saved — open it to add it to your calendar'); });
+  const fontSel = $('set-font');
+  if (fontSel) fontSel.addEventListener('change', (e) => window.appFont.set(e.target.value));
   const badge = $('set-badge');
   if (badge) badge.addEventListener('change', (e) => { state.reminder.badge = e.target.checked; saveState(); updateBadge(); });
   $('set-csv').addEventListener('click', () => { downloadBlob('insight-hunter-' + todayStr() + '.csv', csvText(), 'text/csv'); toast('CSV exported'); });

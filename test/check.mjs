@@ -27,8 +27,10 @@ scripts.forEach((src, i) => {
 });
 
 const srcs = [...html.matchAll(/<script\s+[^>]*src="([^"]+)"/gi)].map((m) => m[1]);
-if (srcs.some((s) => s !== 'content-pack.js')) fail(`unexpected external script(s): ${srcs.join(', ')}`);
-else ok('the only external script is the optional content pack');
+// the optional pack, and the house font module served from this maker's own origin
+const ALLOWED_SRC = ['content-pack.js', 'https://adervec.github.io/font.js'];
+if (srcs.some((s) => !ALLOWED_SRC.includes(s))) fail(`unexpected external script(s): ${srcs.join(', ')}`);
+else ok('external scripts: only the optional content pack and the house font module');
 
 for (const bad of ['window.confirm(', 'window.alert(', 'window.prompt(', '\talert(', ' alert(', ' confirm(', ' prompt(', 'debugger']) {
   if (scripts.some((s) => s.includes(bad))) fail(`banned token in inline script: "${bad.trim()}"`);

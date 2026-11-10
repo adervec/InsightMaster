@@ -8,7 +8,7 @@ It ships with **one practice**: plain sitting meditation, in three variations. T
 the app is a shell, and the content is data you can replace. See [Content](#content).
 
 The whole thing is one file, [`insight-hunter.html`](insight-hunter.html) (~180 KB, inline
-HTML/CSS/JS, no runtime dependencies, no build step to use it).
+HTML/CSS/JS, no build step to use it; the one thing it loads is the house font module from the same site).
 
 ## Run it
 
@@ -61,6 +61,8 @@ toast, and the app asks the browser for persistent storage so years of history a
 - **Keyboard & touch** — every control is focusable and operable from the keyboard (`/` searches,
   Enter opens, Escape closes), sheets trap and restore focus, and the phone's back button closes
   the open sheet instead of leaving the app. Deletions offer **Undo** rather than a confirmation.
+- **Font** — Atkinson Hyperlegible by default, with a reader-chosen font under Settings that is
+  shared by every app on this site.
 - **Data** — JSON export/import (merge or overwrite), CSV export, copy or share a text summary, and an
   optional [Google Drive backup](#privacy).
 
@@ -108,6 +110,11 @@ Every other key is optional and defaults to empty — `importanceMap`, `importan
 No account, no servers, no analytics. The app is static and keyless, and by default nothing it
 does touches the network after it loads. Your log, plans and settings live in this browser's
 `localStorage`, plus any JSON backups you export yourself.
+
+The page loads one small script from this site's own origin, `https://adervec.github.io/font.js`, for
+the house font (Atkinson Hyperlegible) and the reader's font choice. It stores only the chosen font name
+in `localStorage` and talks to nothing else; offline, or from a downloaded copy, the app keeps the
+system font.
 
 Exactly one feature reaches out, and only if you turn it on:
 

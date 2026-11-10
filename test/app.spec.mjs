@@ -481,3 +481,15 @@ test('closing-bell count and vibrate settings persist', async ({ page }) => {
   await expect(page.locator('#set-endbells')).toHaveValue('3');
   await expect(page.locator('#set-haptics')).toBeChecked();
 });
+
+test('house font: Atkinson Hyperlegible by default, and the Settings choice changes it and sticks', async ({ page }) => {
+  const bodyFont = () => page.evaluate(() => getComputedStyle(document.body).fontFamily);
+  await expect.poll(bodyFont).toMatch(/^"?Atkinson Hyperlegible/);
+  await page.click('.tab[data-tab="settings"]');
+  await page.selectOption('#set-font', 'serif');
+  await expect.poll(bodyFont).toMatch(/^Georgia/);
+  await page.reload();
+  await expect.poll(bodyFont).toMatch(/^Georgia/);
+  await page.click('.tab[data-tab="settings"]');
+  await expect(page.locator('#set-font')).toHaveValue('serif');
+});

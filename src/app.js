@@ -3,7 +3,7 @@
    Single file, offline-first, localStorage. Content library baked in from the
    Flexibility & Mind-Body Reference guide. */
 
-const APP_BUILD = 'build 2 · 2026-11-09';
+const APP_BUILD = 'build 3 · 2026-11-09';
 const APP_TITLE = document.title;
 const STORAGE_KEY = 'insight_hunter_v1';
 const PENDING_KEY = 'insight_hunter_pending_v1';
@@ -1786,6 +1786,14 @@ function renderSettings() {
       </div>` : ''}
     </div>
     <div class="card">
+      <h2>🔤 Font</h2>
+      <div class="set-row">
+        <div class="sl">Reading font<br><span class="d">Atkinson Hyperlegible by default. The choice is shared by every app on this site.</span></div>
+        ${window.appFont ? `<select class="mini" id="set-font" aria-label="Reading font">${window.appFont.options.map((o) => `<option value="${o.id}" ${window.appFont.get() === o.id ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`
+          : '<span class="muted">Available on the hosted copy</span>'}
+      </div>
+    </div>
+    <div class="card">
       <h2>💾 Data</h2>
       <div class="btn-row">
         <button class="btn" id="set-export">⬇ Export JSON</button>
@@ -1832,6 +1840,8 @@ function renderSettings() {
   $('set-goal').addEventListener('change', (e) => { state.goal.weeklyMin = Math.max(10, Math.min(2000, +e.target.value || 90)); saveState(); });
   $('set-rem-time').addEventListener('change', (e) => { state.reminder.time = e.target.value; saveState(); });
   $('set-rem-ics').addEventListener('click', () => { state.reminder.time = $('set-rem-time').value || '07:00'; saveState(); downloadBlob('insight-hunter-reminder.ics', reminderIcs(), 'text/calendar'); toast('Reminder saved — open it to add it to your calendar'); });
+  const fontSel = $('set-font');
+  if (fontSel) fontSel.addEventListener('change', (e) => window.appFont.set(e.target.value));
   const badge = $('set-badge');
   if (badge) badge.addEventListener('change', (e) => { state.reminder.badge = e.target.checked; saveState(); updateBadge(); });
   $('set-csv').addEventListener('click', () => { downloadBlob('insight-hunter-' + todayStr() + '.csv', csvText(), 'text/csv'); toast('CSV exported'); });
