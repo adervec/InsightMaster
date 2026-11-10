@@ -32,6 +32,7 @@ const ALLOWED_SRC = ['content-pack.js', 'https://adervec.github.io/font.js'];
 if (srcs.some((s) => !ALLOWED_SRC.includes(s))) fail(`unexpected external script(s): ${srcs.join(', ')}`);
 else ok('external scripts: only the optional content pack and the house font module');
 
+if (scripts.some((s) => s.includes('localStorage.clear('))) fail('localStorage.clear() would erase every app on this shared origin');
 for (const bad of ['window.confirm(', 'window.alert(', 'window.prompt(', '\talert(', ' alert(', ' confirm(', ' prompt(', 'debugger']) {
   if (scripts.some((s) => s.includes(bad))) fail(`banned token in inline script: "${bad.trim()}"`);
 }

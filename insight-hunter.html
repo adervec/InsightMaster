@@ -1081,8 +1081,9 @@ async function driveRestore() {
    Single file, offline-first, localStorage. Content library baked in from the
    Flexibility & Mind-Body Reference guide. */
 
-const APP_BUILD = 'build 3 · 2026-11-09';
+const APP_BUILD = 'build 4 · 2026-11-10';
 const APP_TITLE = document.title;
+window.appUpdateNotice = false; // font.js reads this when an update lands; the app's own Reload toast covers it
 const STORAGE_KEY = 'insight_hunter_v1';
 const PENDING_KEY = 'insight_hunter_pending_v1';
 const TAB_KEY = 'ih_tab';
@@ -1739,6 +1740,7 @@ async function endSession() {
   active.updatedAt = Date.now();
   state.sessions.push(active);
   sortSessions();
+  logPortalActivity(total);
   const prior = state.sessions.filter((s) => s.date < active.date);
   const last = prior.length ? prior[prior.length - 1] : null;
   active = null;
@@ -1754,6 +1756,16 @@ async function endSession() {
     msg += total >= lm ? '\nYou met your last session (' + fmtMin(lm) + ') — ' + (total > lm ? 'and beat it.' : 'matched.') : '\nLast session was ' + fmtMin(lm) + ' — there’s tomorrow.';
   }
   await choiceDialog({ title: '✨ Session complete — ' + fmtMin(total), msg: msg, buttons: [{ label: 'Done', value: true, kind: 'primary' }] });
+}
+/* The maker portal on this origin reads a shared list of [unixSeconds, slug, kind, amount] to draw its
+   streak. Amount is tens of minutes, as in the sibling apps. Backdated logs are left out: their
+   timestamp would put them on the wrong day. */
+function logPortalActivity(min) {
+  try {
+    const k = 'portal-activity', a = JSON.parse(localStorage.getItem(k) || '[]');
+    a.push([Math.round(Date.now() / 1000), 'InsightMaster', 'focus', Math.max(1, Math.round(min / 10))]);
+    localStorage.setItem(k, JSON.stringify(a.slice(-2000)));
+  } catch (e) { /* quota or bad JSON — the portal is optional */ }
 }
 async function discardSession(silent) {
   if (!active) return;
@@ -3048,19 +3060,21 @@ function copySummary() {
     ta.remove();
   }
 }
+const APP_KEYS = [STORAGE_KEY, PENDING_KEY, TAB_KEY, TIMER_KEY, LIBVIEW_KEY, LIBSORT_KEY];
 async function clearAll() {
-  const a = await choiceDialog({ title: 'Clear all data?', msg: 'Sessions, plans, favorites and settings will be erased from this device.', buttons: [{ label: 'Continue', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
+  const a = await choiceDialog({ title: 'Clear all data?', msg: 'Sessions, plans, favorites and settings will be erased from this device. Your other apps on this site keep their data, and any Google Drive backup is not touched.', buttons: [{ label: 'Continue', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
   if (!a) return;
   const b = await choiceDialog({ title: 'Really erase everything?', msg: 'This cannot be undone. Export a backup first if in doubt.', buttons: [{ label: 'Erase it all', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
   if (!b) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(PENDING_KEY);
+  // Only this app's own keys: every app shares this origin, so never wipe the whole store.
+  APP_KEYS.forEach((k) => localStorage.removeItem(k));
+  T = null;
   state = defaultState();
   active = null;
   seedPlans();
   renderAll();
   renderLibrary();
-  toast('All data cleared');
+  toast('All data cleared — Drive backup untouched');
 }
 
 /* ==================================================================

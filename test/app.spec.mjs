@@ -493,3 +493,53 @@ test('house font: Atkinson Hyperlegible by default, and the Settings choice chan
   await page.click('.tab[data-tab="settings"]');
   await expect(page.locator('#set-font')).toHaveValue('serif');
 });
+
+test('erase everything removes only this app’s keys, confirms first, and says Drive is untouched', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('maker-font', 'serif');
+    localStorage.setItem('portal-activity', '[[1,"GymTracker315","lift",3]]');
+    localStorage.setItem('some-other-app', 'keep me');
+  });
+  await page.click('#begin-btn');
+  await page.click('#add-practice-btn');
+  await page.fill('#picker-q', 'sitting');
+  await page.locator('.picker-row').first().click();
+  await page.click('#ls-log');
+  await page.click('#end-btn');
+  await page.click('#dlg-ov .btn.primary');
+  await page.click('.tab[data-tab="library"]');
+  await page.click('.tab[data-tab="settings"]');
+  await page.click('#set-clear');
+  await expect(page.locator('#dlg-ov')).toContainText('Google Drive backup is not touched');
+  await page.click('#dlg-ov .btn.danger');
+  await page.click('#dlg-ov .btn.danger');
+  await expect(page.locator('#toast')).toContainText('Drive backup untouched');
+  const keys = await page.evaluate(() => Object.keys(localStorage).sort());
+  expect(keys.filter((k) => /^(ih_|insight_hunter)/.test(k)).length, keys.join(',')).toBeLessThanOrEqual(1); // re-saved fresh state only
+  const left = await page.evaluate(() => ({ f: localStorage.getItem('maker-font'), o: localStorage.getItem('some-other-app'), p: JSON.parse(localStorage.getItem('portal-activity')) }));
+  expect(left.f).toBe('serif');
+  expect(left.o).toBe('keep me');
+  expect(left.p[0][1]).toBe('GymTracker315');
+  const st = await page.evaluate(() => JSON.parse(localStorage.getItem('insight_hunter_v1') || '{"sessions":[]}'));
+  expect(st.sessions.length).toBe(0);
+});
+
+test('ending a session appends meditation to the shared portal activity list', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('portal-activity', '[[1,"Run315","cardio",2]]'));
+  await page.click('#begin-btn');
+  await page.click('#add-practice-btn');
+  await page.fill('#picker-q', 'sitting');
+  await page.locator('.picker-row').first().click();
+  await page.click('.ls-preset[data-n="20"]');
+  await page.click('#ls-log');
+  await page.click('#end-btn');
+  await page.click('#dlg-ov .btn.primary');
+  const a = await page.evaluate(() => JSON.parse(localStorage.getItem('portal-activity')));
+  expect(a.length).toBe(2);
+  expect(a[0][1]).toBe('Run315');
+  const [ts, slug, kind, amount] = a[1];
+  expect(slug).toBe('InsightMaster');
+  expect(kind).toBe('focus');
+  expect(amount).toBe(2);
+  expect(Math.abs(ts - Date.now() / 1000)).toBeLessThan(60);
+});

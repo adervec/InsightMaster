@@ -1,6 +1,6 @@
 /* InsightHunter service worker — offline-first app shell (same strategy as GymTracker315):
    network-first for the document, cache-first for static assets. */
-const BUILD = '3';
+const BUILD = '4';
 const CACHE = 'ih-cache-' + BUILD;
 const SHELL = ['./', './insight-hunter.html', './content-pack.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-512-maskable.png', './apple-touch-icon.png'];
 
