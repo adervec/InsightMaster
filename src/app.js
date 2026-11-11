@@ -3,7 +3,7 @@
    Single file, offline-first, localStorage. Content library baked in from the
    Flexibility & Mind-Body Reference guide. */
 
-const APP_BUILD = 'build 4 · 2026-11-10';
+const APP_BUILD = 'build 5 · 2026-11-10';
 const APP_TITLE = document.title;
 window.appUpdateNotice = false; // font.js reads this when an update lands; the app's own Reload toast covers it
 const STORAGE_KEY = 'insight_hunter_v1';
@@ -1821,6 +1821,12 @@ function renderSettings() {
     </div>
     ${driveSettingsHtml()}
     <div class="card">
+      <h2>🤝 Practice coach</h2>
+      <div class="muted">Share your own log with an AI agent through a folder on this device, and read its note here. Nothing leaves the device unless you sync that folder yourself. Replies wait for your review by default.</div>
+      <div class="coach-reply" id="coach-reply" ${getCoachReply() ? '' : 'hidden'}>${esc(getCoachReply())}</div>
+      <div id="coach-slot"></div>
+    </div>
+    <div class="card">
       <h2>ℹ️ About</h2>
       <div class="about-block">
         <strong>🏹 InsightHunter</strong> · ${APP_BUILD}<br>
@@ -1863,6 +1869,7 @@ function renderSettings() {
   $('set-import').addEventListener('click', () => $('set-import-file').click());
   $('set-import-file').addEventListener('change', importJson);
   bindDriveSettings();
+  mountCoach($('coach-slot'));
   $('set-copy').addEventListener('click', copySummary);
   $('set-reseed').addEventListener('click', () => { state.seededPlanIds = []; state.plans = state.plans.filter((pl) => !pl.seeded); seedPlans(); toast('Seed plans restored'); });
   $('set-clear').addEventListener('click', clearAll);
@@ -1982,14 +1989,14 @@ function copySummary() {
     ta.remove();
   }
 }
-const APP_KEYS = [STORAGE_KEY, PENDING_KEY, TAB_KEY, TIMER_KEY, LIBVIEW_KEY, LIBSORT_KEY];
+const appKeys = () => [STORAGE_KEY, PENDING_KEY, TAB_KEY, TIMER_KEY, LIBVIEW_KEY, LIBSORT_KEY, COACH_KEY, COWORK_STATE_KEY];
 async function clearAll() {
   const a = await choiceDialog({ title: 'Clear all data?', msg: 'Sessions, plans, favorites and settings will be erased from this device. Your other apps on this site keep their data, and any Google Drive backup is not touched.', buttons: [{ label: 'Continue', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
   if (!a) return;
   const b = await choiceDialog({ title: 'Really erase everything?', msg: 'This cannot be undone. Export a backup first if in doubt.', buttons: [{ label: 'Erase it all', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
   if (!b) return;
   // Only this app's own keys: every app shares this origin, so never wipe the whole store.
-  APP_KEYS.forEach((k) => localStorage.removeItem(k));
+  appKeys().forEach((k) => localStorage.removeItem(k));
   T = null;
   state = defaultState();
   active = null;
@@ -1997,6 +2004,105 @@ async function clearAll() {
   renderAll();
   renderLibrary();
   toast('All data cleared — Drive backup untouched');
+}
+
+/* ==================================================================
+   COWORK — the practice coach, through the maker's shared panel
+   (https://adervec.github.io/cowork.js, folder mode). It writes request files into a folder you
+   choose on this device and reads the reply an agent leaves there; nothing goes over the network.
+   Only your own log is sent: dates, minutes, practice names, feel and notes. Never the library's
+   steps or cues.
+   ================================================================== */
+const COACH_KEY = 'ih_coach_reply';
+const COWORK_STATE_KEY = 'cowork-state:insightmaster'; // the engine's own per-app state
+function loadCowork() {
+  if (window.cowork) return Promise.resolve(window.cowork);
+  return new Promise((res) => {
+    try {
+      const s = document.createElement('script');
+      s.src = 'https://adervec.github.io/cowork.js'; s.async = true;
+      s.onload = () => res(window.cowork || null); s.onerror = () => res(null);
+      document.head.appendChild(s);
+    } catch (e) { res(null); }
+  });
+}
+// djb2, as the cowork protocol and the sibling apps use it
+function coworkHash(text) { let h = 5381; for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0; return h.toString(16); }
+const COWORK_MANIFEST = { protocol: 'cowork-manifest', protocolVersion: 1, app: 'insightmaster', channels: [
+  { name: 'coach', request: ['coach/request.json'], instructions: 'coach/INSTRUCTIONS.md', replyPath: 'coach/reply.json' }] };
+function coachPayload() {
+  const s = streaks(), days = dayTotals();
+  const recent = allSessions().filter((x) => x.entries.length).slice(-40).map((x) => ({
+    date: x.date, minutes: sessionMin(x), feel: x.feel || null, notes: x.notes || '', plan: x.planName || null,
+    practices: x.entries.map((e) => ({ name: displayName(e.exId, e.varId), minutes: e.min })),
+  }));
+  const week = Object.entries(days).filter(([d]) => weekStart(new Date(d + 'T12:00:00')) === weekStart(new Date())).reduce((t, [, m]) => t + m, 0);
+  return {
+    today: todayStr(), streak: s.current, bestStreak: s.best, weeklyGoalMin: state.goal.weeklyMin, thisWeekMin: week,
+    totalMin: Object.values(days).reduce((a, b) => a + b, 0), recentSessions: recent,
+    plans: state.plans.map((p) => ({ name: p.name, steps: p.steps.map((st) => ({ name: displayName(st.exId, st.varId), minutes: st.min })) })),
+  };
+}
+const COACH_INSTRUCTIONS = [
+  '# InsightMaster — practice coach channel', '',
+  'Read `coach/request.json`. `payload` is the practitioner\'s own log: streak and best streak, the weekly',
+  'goal and minutes so far this week, the last 40 sessions (date, minutes, how it felt 1-5, notes, the',
+  'practices done) and their saved plans.', '',
+  'Write `coach/reply.json`:', '', '```json',
+  '{ "requestHash": "<copy the request\'s requestHash verbatim>",',
+  '  "reply": "<a short practice note in plain text or light markdown: one pattern you notice in their log, a realistic plan for the coming week that fits their goal, and one thing they are doing well. Warm, specific, never pushy. Do not prescribe breath holds, fasting or anything risky; suggest a teacher for anything advanced.>" }',
+  '```', '',
+  'If you cannot do the job, write `coach/error.json` with `{ "requestHash": "…", "error": "why" }` instead.', '',
+].join('\n');
+function coachFiles() {
+  const payload = coachPayload();
+  return {
+    'coach/request.json': { protocol: 'insightmaster-coach', protocolVersion: 1, kind: 'request', generatedAt: new Date().toISOString(),
+      requestHash: coworkHash(JSON.stringify(payload)), payload },
+    'coach/INSTRUCTIONS.md': COACH_INSTRUCTIONS,
+  };
+}
+function coachReplyText(r) {
+  return typeof r === 'string' ? r : (r && (r.reply || (r.payload && r.payload.reply))) || JSON.stringify(r, null, 2);
+}
+function getCoachReply() { try { return localStorage.getItem(COACH_KEY) || ''; } catch (e) { return ''; } }
+function setCoachReply(text) {
+  try { if (text) localStorage.setItem(COACH_KEY, text); else localStorage.removeItem(COACH_KEY); } catch (e) { /* quota */ }
+  const out = $('coach-reply');
+  if (out) { out.textContent = text; out.hidden = !text; }
+}
+const COACH_CHANNEL = {
+  label: 'Practice coach',
+  preview: (r) => [{ id: 'reply', label: 'Show this advice in Settings (replaces the current note)', detail: coachReplyText(r).slice(0, 600) }],
+  apply: (r) => { const prev = getCoachReply(); setCoachReply(coachReplyText(r)); return { summary: 'new coach note shown', undo: { prev } }; },
+  undo: (d) => setCoachReply((d && d.prev) || ''),
+};
+function coachBrief() {
+  const p = coachPayload();
+  const last = p.recentSessions.slice(-7).reverse().map((x) => '- ' + x.date + ': ' + fmtMin(x.minutes) + (x.feel ? ' · felt ' + x.feel + '/5' : ''));
+  return {
+    markdown: '# InsightMaster brief\n\nStreak ' + p.streak + ' days (best ' + p.bestStreak + '). This week ' + p.thisWeekMin + ' of ' + p.weeklyGoalMin + ' min.\n\n## Last sessions\n\n' + (last.join('\n') || '- (none yet)') + '\n',
+    data: { app: 'insightmaster', generatedAt: new Date().toISOString(), streak: p.streak, bestStreak: p.bestStreak, thisWeekMin: p.thisWeekMin, weeklyGoalMin: p.weeklyGoalMin },
+  };
+}
+// The panel lives in one host element that survives Settings re-renders, so it mounts once.
+let _coachHost = null;
+function mountCoach(slot) {
+  if (!slot) return;
+  if (!_coachHost) {
+    _coachHost = document.createElement('div');
+    _coachHost.id = 'coach-host';
+    loadCowork().then((cw) => {
+      if (!cw) { _coachHost.textContent = 'The cowork panel loads on the hosted copy, when online.'; return; }
+      cw.mount(_coachHost, {
+        app: 'insightmaster', manifest: COWORK_MANIFEST, files: coachFiles,
+        apply: (_ch, r) => COACH_CHANNEL.apply(r), // v1 fallback
+        channels: { coach: COACH_CHANNEL },
+        brief: coachBrief,
+      });
+    });
+  }
+  slot.appendChild(_coachHost);
 }
 
 /* ==================================================================

@@ -1,6 +1,13 @@
 [
   {
     "date": "2026-11-10",
+    "version": "Build 5",
+    "items": [
+      "Practice coach in Settings: share your own log with an AI agent through a folder on this device, review its note, and undo it if you change your mind."
+    ]
+  },
+  {
+    "date": "2026-11-10",
     "version": "Build 4",
     "items": [
       "Erase everything now clears only this app's data. Your other apps here and your Google Drive backup are left alone, and the prompt says so.",

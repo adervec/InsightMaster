@@ -116,6 +116,12 @@ the house font (Atkinson Hyperlegible) and the reader's font choice. It stores o
 in `localStorage` and talks to nothing else; offline, or from a downloaded copy, the app keeps the
 system font.
 
+Settings → **Practice coach** loads the maker's shared cowork panel from the same site
+(`https://adervec.github.io/cowork.js`). It writes request files into a folder **you** pick on this
+device and reads the reply an agent leaves there; it makes no network requests of its own. Only your
+own log goes into the request (dates, minutes, practice names, feel, notes, plans), never the
+library's steps or cues. A reply waits for your review and can be undone.
+
 Exactly one feature reaches out, and only if you turn it on:
 
 | Feature | Talks to | What happens |

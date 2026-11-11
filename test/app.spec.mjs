@@ -543,3 +543,35 @@ test('ending a session appends meditation to the shared portal activity list', a
   expect(amount).toBe(2);
   expect(Math.abs(ts - Date.now() / 1000)).toBeLessThan(60);
 });
+
+test('practice coach: the panel mounts in Settings, sends only the log, and a reply can be applied and undone', async ({ page }) => {
+  await page.click('#begin-btn');
+  await page.click('#add-practice-btn');
+  await page.fill('#picker-q', 'sitting');
+  await page.locator('.picker-row').first().click();
+  await page.click('#ls-log');
+  await page.click('#end-btn');
+  await page.click('#dlg-ov .btn.primary');
+  await page.click('.tab[data-tab="settings"]');
+  await expect(page.locator('.card', { hasText: 'Practice coach' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => !!document.getElementById('coach-host') && !!(window.cowork || document.getElementById('coach-host').textContent))).toBe(true);
+
+  const files = await page.evaluate(() => coachFiles());
+  const req = files['coach/request.json'];
+  expect(req.protocol).toBe('insightmaster-coach');
+  expect(req.requestHash).toBe(await page.evaluate((p) => coworkHash(JSON.stringify(p)), req.payload));
+  expect(req.payload.recentSessions.length).toBe(1);
+  expect(req.payload.recentSessions[0].practices[0].name).toContain('Sitting Meditation');
+  const sent = JSON.stringify(req.payload);
+  for (const key of ['"movement"', '"setup"', '"mistakes"', '"quickCue"', '"cue"']) expect(sent).not.toContain(key); // no library content
+  expect(files['coach/INSTRUCTIONS.md']).toContain('requestHash');
+
+  const done = await page.evaluate(() => COACH_CHANNEL.apply({ requestHash: 'x', reply: 'Sit ten minutes after breakfast.' }));
+  await expect(page.locator('#coach-reply')).toHaveText('Sit ten minutes after breakfast.');
+  await page.reload();
+  await page.click('.tab[data-tab="settings"]');
+  await expect(page.locator('#coach-reply')).toHaveText('Sit ten minutes after breakfast.');
+  await page.evaluate((d) => COACH_CHANNEL.undo(d), done.undo);
+  await expect(page.locator('#coach-reply')).toBeHidden();
+  expect((await page.evaluate(() => coachBrief())).markdown).toContain('Streak');
+});
