@@ -308,6 +308,7 @@ function renderStreakChip() {
 
 /* ---------- tabs ---------- */
 let currentTab = localStorage.getItem(TAB_KEY) || 'practice';
+document.addEventListener('app-account-click', () => switchTab('settings')); // the header avatar opens Settings (font.js <app-account>)
 function switchTab(name) {
   currentTab = name;
   localStorage.setItem(TAB_KEY, name);

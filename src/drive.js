@@ -58,7 +58,7 @@ async function fetchDriveProfile(token) {
     const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
     if (r.ok) {
       const j = await r.json();
-      _driveProfile = { name: j.name || j.email || 'Google account', picture: j.picture || '', email: j.email || '' };
+      _driveProfile = { name: j.name || j.email || 'Google account', picture: j.picture || '', email: j.email || '' }; window.appFont?.setAccount(_driveProfile);
     }
   } catch (e) { /* cosmetic only — never blocks a backup */ }
   return _driveProfile;
@@ -105,7 +105,7 @@ async function driveConnect(opts) {
   await fetchDriveProfile(token);
   return token;
 }
-function driveDisconnect() { _driveToken = null; _driveProfile = null; }
+function driveDisconnect() { _driveToken = null; _driveProfile = null; window.appFont?.setAccount(null); }
 
 async function driveFind(token) {
   const q = encodeURIComponent("name='" + DRIVE_FILE_NAME + "' and trashed=false");
